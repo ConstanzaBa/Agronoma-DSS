@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-canopy-50 font-sans text-canopy-900 antialiased transition-colors duration-300;
+  }
+  .dark body {
+    @apply bg-canopy-950 text-canopy-100;
+  }
+}
+
+@layer components {
+  .section-label {
+    @apply font-mono text-xs font-medium uppercase tracking-[0.2em] text-canopy-500;
+  }
+  .dark .section-label {
+    @apply text-gold-400;
+  }
+  .display-title {
+    @apply font-display font-bold uppercase leading-[0.95] tracking-tight;
+  }
+}

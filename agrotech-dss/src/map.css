@@ -1,0 +1,66 @@
+/* Marcadores de sensores (Leaflet divIcon) */
+.ag-sensor {
+  position: relative;
+  width: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.ag-chip {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 9999px;
+  background: #fff;
+  border: 3px solid var(--c);
+  color: var(--c);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.4);
+  transition: transform 0.15s;
+}
+.ag-sensor:hover .ag-chip {
+  transform: scale(1.1);
+}
+.ag-optimal {
+  --c: #1d4f91;
+}
+.ag-warning {
+  --c: #f59e0b;
+}
+.ag-critical {
+  --c: #f0561f;
+}
+.ag-warning .ag-chip,
+.ag-critical .ag-chip {
+  background: #fff1e6;
+}
+.ag-pill {
+  margin-top: 3px;
+  padding: 0 7px;
+  border-radius: 9999px;
+  background: rgb(255 255 255 / 0.96);
+  color: var(--c);
+  font: 700 11px/17px "JetBrains Mono", ui-monospace, monospace;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.35);
+}
+.ag-sel .ag-chip {
+  box-shadow: 0 0 0 5px rgb(250 204 21 / 0.6), 0 2px 10px rgb(0 0 0 / 0.5);
+}
+
+/* Mapa */
+.leaflet-container {
+  font-family: inherit;
+  background: #0b1a0f;
+}
+.leaflet-container .leaflet-control-attribution {
+  font-size: 10px;
+  background: rgb(255 255 255 / 0.75);
+}
+.ag-drawing,
+.ag-drawing .leaflet-interactive {
+  cursor: crosshair !important;
+}
+.leaflet-tooltip {
+  border-radius: 8px;
+  font-weight: 600;
+}
