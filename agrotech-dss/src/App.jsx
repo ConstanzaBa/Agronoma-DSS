@@ -39,6 +39,7 @@ export default function App() {
         <Route path="/login" element={<GuestOnly><Login dark={dark} onToggle={toggle} /></GuestOnly>} />
         <Route path="/registro" element={<GuestOnly><Register dark={dark} onToggle={toggle} /></GuestOnly>} />
         <Route path="/dashboard" element={<RequireAuth><Dashboard dark={dark} onToggle={toggle} /></RequireAuth>} />
+        <Route path="/docs" element={<ApiDocs dark={dark} onToggle={toggle} />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
