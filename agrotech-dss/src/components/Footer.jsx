@@ -1,4 +1,7 @@
+import { Link } from "react-router-dom";
 import { Github, Linkedin, Radio, Terminal } from "lucide-react";
+
+const internalLinks = { "API Docs": "/docs" };
 
 const columns = [
   { title: "Network", links: ["API Docs", "System Status", "Dev Forum"] },
@@ -30,9 +33,15 @@ export default function Footer() {
               <ul className="mt-6 space-y-3 text-sm">
                 {c.links.map((l) => (
                   <li key={l}>
-                    <a href="#" className="transition hover:text-gold-400">
-                      {l}
-                    </a>
+                    {internalLinks[l] ? (
+                      <Link to={internalLinks[l]} className="transition hover:text-gold-400">
+                        {l}
+                      </Link>
+                    ) : (
+                      <a href="#" className="transition hover:text-gold-400">
+                        {l}
+                      </a>
+                    )}
                   </li>
                 ))}
               </ul>

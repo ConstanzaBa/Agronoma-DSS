@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { ArrowUp, FileCode2, SignalHigh, Terminal } from "lucide-react";
 import DashboardMock from "./DashboardMock.jsx";
 
@@ -58,12 +59,12 @@ export default function Hero() {
             >
               <Terminal size={15} /> Deploy data stack
             </a>
-            <a
-              href="#"
+            <Link
+              to="/docs"
               className="inline-flex items-center gap-2 rounded-md border border-canopy-400 px-5 py-3 font-mono text-xs font-medium uppercase tracking-widest text-canopy-700 transition hover:bg-canopy-100 dark:border-gold-400/30 dark:text-canopy-100 dark:hover:bg-canopy-900"
             >
               <FileCode2 size={15} /> Ver API docs
-            </a>
+            </Link>
           </div>
         </div>
 
