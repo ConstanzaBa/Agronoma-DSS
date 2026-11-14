@@ -1,0 +1,846 @@
+{
+    "openapi": "3.1.2",
+    "info": {
+        "title": "AgronomaAuth",
+        "version": "0.0.1"
+    },
+    "servers": [
+        {
+            "url": "http://127.0.0.1:8001/api/v1"
+        }
+    ],
+    "paths": {
+        "/registro": {
+            "post": {
+                "operationId": "auth.registro",
+                "tags": [
+                    "Auth"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "nombre": {
+                                        "type": "string",
+                                        "maxLength": 80
+                                    },
+                                    "apellido": {
+                                        "type": "string",
+                                        "maxLength": 80
+                                    },
+                                    "correo": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "maxLength": 150
+                                    },
+                                    "contrasena": {
+                                        "type": "string",
+                                        "minLength": 8,
+                                        "maxLength": 100
+                                    },
+                                    "profesion": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 40
+                                    },
+                                    "telefono": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 30
+                                    }
+                                },
+                                "required": [
+                                    "nombre",
+                                    "apellido",
+                                    "correo",
+                                    "contrasena"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "500": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "codigo": {
+                                            "type": "string",
+                                            "const": "error_interno"
+                                        },
+                                        "mensaje": {
+                                            "type": "string",
+                                            "const": "No se pudo registrar el usuario"
+                                        }
+                                    },
+                                    "required": [
+                                        "codigo",
+                                        "mensaje"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Usuario"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/login": {
+            "post": {
+                "operationId": "auth.login",
+                "tags": [
+                    "Auth"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "correo": {
+                                        "type": "string",
+                                        "format": "email"
+                                    },
+                                    "contrasena": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "correo",
+                                    "contrasena"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "500": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "codigo": {
+                                            "type": "string",
+                                            "const": "error_interno"
+                                        },
+                                        "mensaje": {
+                                            "type": "string",
+                                            "const": "No se pudo iniciar sesi\u00f3n"
+                                        }
+                                    },
+                                    "required": [
+                                        "codigo",
+                                        "mensaje"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "token": {
+                                            "type": "string"
+                                        },
+                                        "tipo": {
+                                            "type": "string",
+                                            "const": "Bearer"
+                                        },
+                                        "expira_en": {
+                                            "type": "string"
+                                        },
+                                        "usuario": {
+                                            "anyOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/Usuario"
+                                                },
+                                                {
+                                                    "type": "null"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "token",
+                                        "tipo",
+                                        "expira_en",
+                                        "usuario"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "codigo": {
+                                            "type": "string",
+                                            "const": "usuario_inactivo"
+                                        },
+                                        "mensaje": {
+                                            "type": "string",
+                                            "const": "El usuario est\u00e1 desactivado"
+                                        }
+                                    },
+                                    "required": [
+                                        "codigo",
+                                        "mensaje"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "codigo": {
+                                            "type": "string",
+                                            "const": "credenciales_invalidas"
+                                        },
+                                        "mensaje": {
+                                            "type": "string",
+                                            "const": "Correo o contrase\u00f1a incorrectos"
+                                        }
+                                    },
+                                    "required": [
+                                        "codigo",
+                                        "mensaje"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/logout": {
+            "post": {
+                "operationId": "auth.logout",
+                "tags": [
+                    "Auth"
+                ],
+                "responses": {
+                    "500": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "codigo": {
+                                            "type": "string",
+                                            "const": "error_interno"
+                                        },
+                                        "mensaje": {
+                                            "type": "string",
+                                            "const": "No se pudo cerrar la sesi\u00f3n"
+                                        }
+                                    },
+                                    "required": [
+                                        "codigo",
+                                        "mensaje"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "const": "Sesi\u00f3n cerrada"
+                                        }
+                                    },
+                                    "required": [
+                                        "mensaje"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "codigo": {
+                                            "type": "string",
+                                            "const": "no_autenticado"
+                                        },
+                                        "mensaje": {
+                                            "type": "string",
+                                            "const": "No hay una sesi\u00f3n v\u00e1lida"
+                                        }
+                                    },
+                                    "required": [
+                                        "codigo",
+                                        "mensaje"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/me": {
+            "get": {
+                "operationId": "auth.me",
+                "tags": [
+                    "Auth"
+                ],
+                "responses": {
+                    "500": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "codigo": {
+                                            "type": "string",
+                                            "const": "error_interno"
+                                        },
+                                        "mensaje": {
+                                            "type": "string",
+                                            "const": "No se pudo consultar el usuario"
+                                        }
+                                    },
+                                    "required": [
+                                        "codigo",
+                                        "mensaje"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "anyOf": [
+                                        {
+                                            "$ref": "#/components/schemas/Usuario"
+                                        },
+                                        {
+                                            "type": "null"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "anyOf": [
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "codigo": {
+                                                    "type": "string",
+                                                    "const": "no_autenticado"
+                                                },
+                                                "mensaje": {
+                                                    "type": "string",
+                                                    "const": "Usuario inexistente o desactivado"
+                                                }
+                                            },
+                                            "required": [
+                                                "codigo",
+                                                "mensaje"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "codigo": {
+                                                    "type": "string",
+                                                    "const": "no_autenticado"
+                                                },
+                                                "mensaje": {
+                                                    "type": "string",
+                                                    "const": "No hay una sesi\u00f3n v\u00e1lida"
+                                                }
+                                            },
+                                            "required": [
+                                                "codigo",
+                                                "mensaje"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "codigo": {
+                                            "type": "string",
+                                            "const": "sin_permiso"
+                                        },
+                                        "mensaje": {
+                                            "type": "string",
+                                            "const": "Este token no pertenece a una persona"
+                                        }
+                                    },
+                                    "required": [
+                                        "codigo",
+                                        "mensaje"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/interno/tokens/validar": {
+            "post": {
+                "operationId": "interno.validar",
+                "tags": [
+                    "Interno"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "token": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "token"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "500": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "codigo": {
+                                            "type": "string",
+                                            "const": "error_interno"
+                                        },
+                                        "mensaje": {
+                                            "type": "string",
+                                            "const": "No se pudo validar el token"
+                                        }
+                                    },
+                                    "required": [
+                                        "codigo",
+                                        "mensaje"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "usuario_id": {
+                                            "type": [
+                                                "integer",
+                                                "null"
+                                            ]
+                                        },
+                                        "autenticable": {
+                                            "type": "string"
+                                        },
+                                        "autenticable_id": {
+                                            "type": "integer"
+                                        },
+                                        "rol": {
+                                            "type": "string"
+                                        },
+                                        "permisos": {
+                                            "type": [
+                                                "array",
+                                                "null"
+                                            ],
+                                            "items": {}
+                                        }
+                                    },
+                                    "required": [
+                                        "usuario_id",
+                                        "autenticable",
+                                        "autenticable_id",
+                                        "rol",
+                                        "permisos"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "codigo": {
+                                            "type": "string",
+                                            "const": "token_invalido"
+                                        },
+                                        "mensaje": {
+                                            "type": "string",
+                                            "const": "Token inv\u00e1lido o vencido"
+                                        }
+                                    },
+                                    "required": [
+                                        "codigo",
+                                        "mensaje"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/interno/tokens/dispositivo": {
+            "post": {
+                "operationId": "interno.dispositivo",
+                "tags": [
+                    "Interno"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "dispositivo_id": {
+                                        "type": "integer",
+                                        "minimum": 1
+                                    },
+                                    "nombre": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    }
+                                },
+                                "required": [
+                                    "dispositivo_id",
+                                    "nombre"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "500": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "codigo": {
+                                            "type": "string",
+                                            "const": "error_interno"
+                                        },
+                                        "mensaje": {
+                                            "type": "string",
+                                            "const": "No se pudo crear el token del dispositivo"
+                                        }
+                                    },
+                                    "required": [
+                                        "codigo",
+                                        "mensaje"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "token": {
+                                            "type": "string"
+                                        },
+                                        "permisos": {
+                                            "type": "array",
+                                            "prefixItems": [
+                                                {
+                                                    "type": "string",
+                                                    "const": "lecturas:crear"
+                                                }
+                                            ],
+                                            "minItems": 1,
+                                            "maxItems": 1
+                                        },
+                                        "aviso": {
+                                            "type": "string",
+                                            "const": "Guardalo ahora: no se vuelve a mostrar"
+                                        }
+                                    },
+                                    "required": [
+                                        "token",
+                                        "permisos",
+                                        "aviso"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/interno/usuarios/{id}": {
+            "get": {
+                "operationId": "interno.usuario",
+                "tags": [
+                    "Interno"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "nombre": {
+                                            "type": "string"
+                                        },
+                                        "apellido": {
+                                            "type": "string"
+                                        },
+                                        "correo": {
+                                            "type": "string"
+                                        },
+                                        "activo": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "nombre",
+                                        "apellido",
+                                        "correo",
+                                        "activo"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "codigo": {
+                                            "type": "string",
+                                            "const": "no_encontrado"
+                                        },
+                                        "mensaje": {
+                                            "type": "string",
+                                            "const": "Usuario inexistente"
+                                        }
+                                    },
+                                    "required": [
+                                        "codigo",
+                                        "mensaje"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "Usuario": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "nombre": {
+                        "type": "string"
+                    },
+                    "apellido": {
+                        "type": "string"
+                    },
+                    "correo": {
+                        "type": "string"
+                    },
+                    "rol": {
+                        "type": "string"
+                    },
+                    "profesion": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "telefono": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "activo": {
+                        "type": "boolean"
+                    },
+                    "creado_en": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "actualizado_en": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "id",
+                    "nombre",
+                    "apellido",
+                    "correo",
+                    "rol",
+                    "profesion",
+                    "telefono",
+                    "activo",
+                    "creado_en",
+                    "actualizado_en"
+                ],
+                "title": "Usuario"
+            }
+        },
+        "responses": {
+            "ValidationException": {
+                "description": "Validation error",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "description": "Errors overview."
+                                },
+                                "errors": {
+                                    "type": "object",
+                                    "description": "A detailed description of each field that failed validation.",
+                                    "additionalProperties": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            },
+                            "required": [
+                                "message",
+                                "errors"
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

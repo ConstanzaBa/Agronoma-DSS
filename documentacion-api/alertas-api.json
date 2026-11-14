@@ -1,0 +1,1036 @@
+{
+    "openapi": "3.1.2",
+    "info": {
+        "title": "AgronomaAlertas",
+        "version": "0.0.1"
+    },
+    "servers": [
+        {
+            "url": "http://127.0.0.1:8005/api/v1"
+        }
+    ],
+    "paths": {
+        "/alertas": {
+            "get": {
+                "operationId": "alerta.index",
+                "tags": [
+                    "Alerta"
+                ],
+                "parameters": [
+                    {
+                        "name": "estado",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "active",
+                                "attended",
+                                "resolved",
+                                null
+                            ]
+                        }
+                    },
+                    {
+                        "name": "tipo",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "moisture",
+                                "silo_temp",
+                                "no_rain",
+                                "market",
+                                "price_target",
+                                null
+                            ]
+                        }
+                    },
+                    {
+                        "name": "desde_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 0
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "pagina": {
+                                                    "type": "integer"
+                                                },
+                                                "por_pagina": {
+                                                    "type": "integer"
+                                                },
+                                                "total": {
+                                                    "type": "integer"
+                                                },
+                                                "ultima_pagina": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "pagina",
+                                                "por_pagina",
+                                                "total",
+                                                "ultima_pagina"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/alertas/feed": {
+            "get": {
+                "operationId": "alerta.feed",
+                "tags": [
+                    "Alerta"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "text/event-stream": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        },
+                        "headers": {
+                            "Transfer-Encoding": {
+                                "required": true,
+                                "schema": {
+                                    "type": "string",
+                                    "enum": [
+                                        "chunked"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/alertas/{id}": {
+            "get": {
+                "operationId": "alerta.show",
+                "tags": [
+                    "Alerta"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Alerta"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/alertas/{id}/atender": {
+            "patch": {
+                "operationId": "alerta.atender",
+                "tags": [
+                    "Alerta"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Alerta"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "codigo": {
+                                            "type": "string",
+                                            "const": "transicion_invalida"
+                                        },
+                                        "mensaje": {
+                                            "type": "string",
+                                            "const": "La alerta ya est\u00e1 resuelta"
+                                        },
+                                        "detalles": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "codigo",
+                                        "mensaje",
+                                        "detalles"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/alertas/{id}/resolver": {
+            "patch": {
+                "operationId": "alerta.resolver",
+                "tags": [
+                    "Alerta"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Alerta"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/interno/eventos": {
+            "post": {
+                "operationId": "interno.eventos",
+                "tags": [
+                    "Interno"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "routing_key": {
+                                        "type": "string",
+                                        "maxLength": 60
+                                    },
+                                    "evento": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "minItems": 1
+                                    }
+                                },
+                                "required": [
+                                    "routing_key",
+                                    "evento"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "202": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "encolado": {
+                                            "type": "boolean"
+                                        },
+                                        "event_id": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "encolado",
+                                        "event_id"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/interno/procesar-cola": {
+            "post": {
+                "operationId": "interno.procesarCola",
+                "tags": [
+                    "Interno"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "anyOf": [
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "omitido": {
+                                                    "type": "boolean"
+                                                },
+                                                "desde_rabbit": {
+                                                    "type": "integer"
+                                                },
+                                                "pendientes": {
+                                                    "type": "integer",
+                                                    "minimum": 0
+                                                }
+                                            },
+                                            "required": [
+                                                "omitido",
+                                                "desde_rabbit",
+                                                "pendientes"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "omitido": {
+                                                    "type": "boolean"
+                                                },
+                                                "desde_rabbit": {
+                                                    "type": "integer",
+                                                    "const": 0
+                                                },
+                                                "pendientes": {
+                                                    "type": "integer",
+                                                    "minimum": 0
+                                                }
+                                            },
+                                            "required": [
+                                                "omitido",
+                                                "desde_rabbit",
+                                                "pendientes"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/objetivos-precio": {
+            "get": {
+                "operationId": "objetivo.index",
+                "tags": [
+                    "Objetivo"
+                ],
+                "parameters": [
+                    {
+                        "name": "activo",
+                        "in": "query",
+                        "schema": {
+                            "type": "boolean",
+                            "default": false
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "pagina": {
+                                                    "type": "integer"
+                                                },
+                                                "por_pagina": {
+                                                    "type": "integer"
+                                                },
+                                                "total": {
+                                                    "type": "integer"
+                                                },
+                                                "ultima_pagina": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "pagina",
+                                                "por_pagina",
+                                                "total",
+                                                "ultima_pagina"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "operationId": "objetivo.store",
+                "tags": [
+                    "Objetivo"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "tipo_cultivo_id": {
+                                        "type": "integer",
+                                        "minimum": 1
+                                    },
+                                    "moneda": {
+                                        "type": "string",
+                                        "enum": [
+                                            "USD",
+                                            "ARS"
+                                        ]
+                                    },
+                                    "direccion": {
+                                        "type": "string",
+                                        "enum": [
+                                            "sube",
+                                            "baja"
+                                        ]
+                                    },
+                                    "umbral": {
+                                        "type": "number",
+                                        "maximum": 9999999999
+                                    }
+                                },
+                                "required": [
+                                    "tipo_cultivo_id",
+                                    "moneda",
+                                    "direccion",
+                                    "umbral"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ObjetivoPrecio"
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "anyOf": [
+                                        {
+                                            "$ref": "#/components/schemas/ObjetivoPrecio"
+                                        },
+                                        {
+                                            "type": "null"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/objetivos-precio/{id}": {
+            "put": {
+                "operationId": "objetivo.update",
+                "tags": [
+                    "Objetivo"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "tipo_cultivo_id": {
+                                        "type": "integer",
+                                        "minimum": 1
+                                    },
+                                    "moneda": {
+                                        "type": "string",
+                                        "enum": [
+                                            "USD",
+                                            "ARS"
+                                        ]
+                                    },
+                                    "direccion": {
+                                        "type": "string",
+                                        "enum": [
+                                            "sube",
+                                            "baja"
+                                        ]
+                                    },
+                                    "umbral": {
+                                        "type": "number",
+                                        "maximum": 9999999999
+                                    },
+                                    "activo": {
+                                        "type": [
+                                            "boolean",
+                                            "null"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "tipo_cultivo_id",
+                                    "moneda",
+                                    "direccion",
+                                    "umbral"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ObjetivoPrecio"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "objetivo.destroy",
+                "tags": [
+                    "Objetivo"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "const": "Objetivo eliminado"
+                                        }
+                                    },
+                                    "required": [
+                                        "mensaje"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/reglas": {
+            "get": {
+                "operationId": "regla.index",
+                "tags": [
+                    "Regla"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ReglaAlerta"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "operationId": "regla.store",
+                "tags": [
+                    "Regla"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "tipo": {
+                                        "type": "string",
+                                        "enum": [
+                                            "moisture",
+                                            "silo_temp",
+                                            "no_rain",
+                                            "market",
+                                            "price_target"
+                                        ]
+                                    },
+                                    "severidad": {
+                                        "type": "string",
+                                        "enum": [
+                                            "critical",
+                                            "warning",
+                                            "info"
+                                        ]
+                                    },
+                                    "parametros": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "minItems": 1
+                                    },
+                                    "activa": {
+                                        "type": [
+                                            "boolean",
+                                            "null"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "tipo",
+                                    "severidad",
+                                    "parametros"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ReglaAlerta"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/reglas/{id}": {
+            "put": {
+                "operationId": "regla.update",
+                "tags": [
+                    "Regla"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "severidad": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "enum": [
+                                            "critical",
+                                            "warning",
+                                            "info",
+                                            null
+                                        ]
+                                    },
+                                    "parametros": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "minItems": 1
+                                    },
+                                    "activa": {
+                                        "type": [
+                                            "boolean",
+                                            "null"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "parametros"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ReglaAlerta"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "Alerta": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "usuario_id": {
+                        "type": "integer"
+                    },
+                    "regla_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "tipo": {
+                        "type": "string"
+                    },
+                    "severidad": {
+                        "type": "string"
+                    },
+                    "lote_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "silo_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "titulo": {
+                        "type": "string"
+                    },
+                    "mensaje": {
+                        "type": "string"
+                    },
+                    "datos": {
+                        "type": [
+                            "array",
+                            "null"
+                        ],
+                        "items": {}
+                    },
+                    "estado": {
+                        "type": "string"
+                    },
+                    "activada_en": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "atendida_en": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "resuelta_en": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "id",
+                    "usuario_id",
+                    "regla_id",
+                    "tipo",
+                    "severidad",
+                    "lote_id",
+                    "silo_id",
+                    "titulo",
+                    "mensaje",
+                    "datos",
+                    "estado",
+                    "activada_en",
+                    "atendida_en",
+                    "resuelta_en"
+                ],
+                "title": "Alerta"
+            },
+            "ObjetivoPrecio": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "usuario_id": {
+                        "type": "integer"
+                    },
+                    "tipo_cultivo_id": {
+                        "type": "integer"
+                    },
+                    "moneda": {
+                        "type": "string"
+                    },
+                    "direccion": {
+                        "type": "string"
+                    },
+                    "umbral": {
+                        "type": "number"
+                    },
+                    "activo": {
+                        "type": "boolean"
+                    },
+                    "ultimo_disparo_en": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "creado_en": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "actualizado_en": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "id",
+                    "usuario_id",
+                    "tipo_cultivo_id",
+                    "moneda",
+                    "direccion",
+                    "umbral",
+                    "activo",
+                    "ultimo_disparo_en",
+                    "creado_en",
+                    "actualizado_en"
+                ],
+                "title": "ObjetivoPrecio"
+            },
+            "ReglaAlerta": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "tipo": {
+                        "type": "string"
+                    },
+                    "severidad": {
+                        "type": "string"
+                    },
+                    "parametros": {
+                        "type": "array",
+                        "items": {}
+                    },
+                    "activa": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "id",
+                    "tipo",
+                    "severidad",
+                    "parametros",
+                    "activa"
+                ],
+                "title": "ReglaAlerta"
+            }
+        },
+        "responses": {
+            "ValidationException": {
+                "description": "Validation error",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "description": "Errors overview."
+                                },
+                                "errors": {
+                                    "type": "object",
+                                    "description": "A detailed description of each field that failed validation.",
+                                    "additionalProperties": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            },
+                            "required": [
+                                "message",
+                                "errors"
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

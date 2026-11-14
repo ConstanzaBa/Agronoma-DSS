@@ -1,0 +1,387 @@
+{
+    "openapi": "3.1.2",
+    "info": {
+        "title": "AgronomaApi",
+        "version": "0.0.1"
+    },
+    "servers": [
+        {
+            "url": "http://127.0.0.1:8000/v1"
+        }
+    ],
+    "paths": {
+        "/estado": {
+            "get": {
+                "operationId": "estado.show",
+                "tags": [
+                    "Estado"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "general": {
+                                            "type": "string",
+                                            "enum": [
+                                                "ok",
+                                                "degradado"
+                                            ]
+                                        },
+                                        "servicios": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "general",
+                                        "servicios"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/registro": {
+            "post": {
+                "operationId": "proxy.publico_0",
+                "summary": "`POST /v1/auth/registro` y `POST /v1/auth/login`: las \u00fanicas rutas sin token",
+                "tags": [
+                    "Proxy"
+                ],
+                "responses": {
+                    "503": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "anyOf": [
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "codigo": {
+                                                    "type": "string",
+                                                    "const": "servicio_no_disponible"
+                                                },
+                                                "mensaje": {
+                                                    "type": "string",
+                                                    "const": "El servicio auth no responde"
+                                                },
+                                                "detalles": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "codigo",
+                                                "mensaje",
+                                                "detalles"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "codigo": {
+                                                    "type": "string",
+                                                    "const": "servicio_no_disponible"
+                                                },
+                                                "mensaje": {
+                                                    "type": "string",
+                                                    "const": "El servicio auth no est\u00e1 disponible"
+                                                },
+                                                "detalles": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "codigo",
+                                                "mensaje",
+                                                "detalles"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/login": {
+            "post": {
+                "operationId": "proxy.publico_1",
+                "summary": "`POST /v1/auth/registro` y `POST /v1/auth/login`: las \u00fanicas rutas sin token",
+                "tags": [
+                    "Proxy"
+                ],
+                "responses": {
+                    "503": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "anyOf": [
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "codigo": {
+                                                    "type": "string",
+                                                    "const": "servicio_no_disponible"
+                                                },
+                                                "mensaje": {
+                                                    "type": "string",
+                                                    "const": "El servicio auth no responde"
+                                                },
+                                                "detalles": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "codigo",
+                                                "mensaje",
+                                                "detalles"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "codigo": {
+                                                    "type": "string",
+                                                    "const": "servicio_no_disponible"
+                                                },
+                                                "mensaje": {
+                                                    "type": "string",
+                                                    "const": "El servicio auth no est\u00e1 disponible"
+                                                },
+                                                "detalles": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "codigo",
+                                                "mensaje",
+                                                "detalles"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/{servicio}/{ruta}": {
+            "get": {
+                "operationId": "proxy.reenviar",
+                "tags": [
+                    "Proxy"
+                ],
+                "parameters": [
+                    {
+                        "name": "servicio",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "ruta",
+                        "in": "path",
+                        "required": true,
+                        "description": "**Optional**",
+                        "schema": {
+                            "type": "string",
+                            "default": ""
+                        },
+                        "x-optional": true
+                    }
+                ],
+                "responses": {
+                    "503": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "codigo": {
+                                            "type": "string",
+                                            "const": "servicio_no_disponible"
+                                        },
+                                        "mensaje": {
+                                            "type": "string"
+                                        },
+                                        "detalles": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "codigo",
+                                        "mensaje",
+                                        "detalles"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            },
+                            "text/event-stream": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        },
+                        "headers": {
+                            "Transfer-Encoding": {
+                                "schema": {
+                                    "type": "string",
+                                    "enum": [
+                                        "chunked"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "codigo": {
+                                            "type": "string",
+                                            "const": "sin_permiso"
+                                        },
+                                        "mensaje": {
+                                            "type": "string",
+                                            "const": "Un token de sensor solo puede enviar lecturas"
+                                        },
+                                        "detalles": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "codigo",
+                                        "mensaje",
+                                        "detalles"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "codigo": {
+                                            "type": "string",
+                                            "const": "no_encontrado"
+                                        },
+                                        "mensaje": {
+                                            "type": "string",
+                                            "const": "Recurso inexistente"
+                                        },
+                                        "detalles": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "codigo",
+                                        "mensaje",
+                                        "detalles"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/resumen": {
+            "get": {
+                "operationId": "resumen.show",
+                "tags": [
+                    "Resumen"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {}
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "codigo": {
+                                            "type": "string",
+                                            "const": "sin_permiso"
+                                        },
+                                        "mensaje": {
+                                            "type": "string",
+                                            "const": "El resumen es solo para personas"
+                                        },
+                                        "detalles": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "codigo",
+                                        "mensaje",
+                                        "detalles"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

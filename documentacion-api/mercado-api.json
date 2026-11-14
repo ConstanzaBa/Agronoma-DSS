@@ -1,0 +1,1704 @@
+{
+    "openapi": "3.1.2",
+    "info": {
+        "title": "AgronomaMercado",
+        "version": "0.0.1"
+    },
+    "servers": [
+        {
+            "url": "http://127.0.0.1:8004/api/v1"
+        }
+    ],
+    "paths": {
+        "/cotizaciones": {
+            "get": {
+                "operationId": "cotizacion.index",
+                "tags": [
+                    "Cotizacion"
+                ],
+                "parameters": [
+                    {
+                        "name": "tipo_cultivo_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "desde",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "hasta",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "pagina": {
+                                                    "type": "integer"
+                                                },
+                                                "por_pagina": {
+                                                    "type": "integer"
+                                                },
+                                                "total": {
+                                                    "type": "integer"
+                                                },
+                                                "ultima_pagina": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "pagina",
+                                                "por_pagina",
+                                                "total",
+                                                "ultima_pagina"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "cotizacion.store",
+                "tags": [
+                    "Cotizacion"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "tipo_cultivo_id": {
+                                        "type": "integer",
+                                        "minimum": 1
+                                    },
+                                    "fecha_cotizacion": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "precio_usd_tn": {
+                                        "type": "number",
+                                        "maximum": 99999999
+                                    },
+                                    "mercado_referencia": {
+                                        "type": "string",
+                                        "enum": [
+                                            "CBOT",
+                                            "ROSARIO"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "tipo_cultivo_id",
+                                    "fecha_cotizacion",
+                                    "precio_usd_tn",
+                                    "mercado_referencia"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/cotizaciones/ultima": {
+            "get": {
+                "operationId": "cotizacion.ultima",
+                "tags": [
+                    "Cotizacion"
+                ],
+                "parameters": [
+                    {
+                        "name": "tipo_cultivo_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {}
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "codigo": {
+                                            "type": "string",
+                                            "const": "sin_datos"
+                                        },
+                                        "mensaje": {
+                                            "type": "string",
+                                            "const": "No hay cotizaciones para ese cultivo"
+                                        },
+                                        "detalles": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "codigo",
+                                        "mensaje",
+                                        "detalles"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/divisas": {
+            "get": {
+                "operationId": "divisa.index",
+                "tags": [
+                    "Divisa"
+                ],
+                "parameters": [
+                    {
+                        "name": "tipo",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "oficial_bna",
+                                "exportador",
+                                null
+                            ]
+                        }
+                    },
+                    {
+                        "name": "desde",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "hasta",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "pagina": {
+                                                    "type": "integer"
+                                                },
+                                                "por_pagina": {
+                                                    "type": "integer"
+                                                },
+                                                "total": {
+                                                    "type": "integer"
+                                                },
+                                                "ultima_pagina": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "pagina",
+                                                "por_pagina",
+                                                "total",
+                                                "ultima_pagina"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "divisa.store",
+                "tags": [
+                    "Divisa"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "tipo": {
+                                        "type": "string",
+                                        "enum": [
+                                            "oficial_bna",
+                                            "exportador"
+                                        ]
+                                    },
+                                    "fecha": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "valor_ars_usd": {
+                                        "type": "number",
+                                        "maximum": 99999999
+                                    }
+                                },
+                                "required": [
+                                    "tipo",
+                                    "fecha",
+                                    "valor_ars_usd"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/divisas/ultima": {
+            "get": {
+                "operationId": "divisa.ultima",
+                "tags": [
+                    "Divisa"
+                ],
+                "parameters": [
+                    {
+                        "name": "tipo",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "oficial_bna",
+                                "exportador",
+                                null
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {}
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "codigo": {
+                                            "type": "string",
+                                            "const": "sin_datos"
+                                        },
+                                        "mensaje": {
+                                            "type": "string",
+                                            "const": "No hay tipo de cambio cargado"
+                                        },
+                                        "detalles": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "codigo",
+                                        "mensaje",
+                                        "detalles"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/silos/{silo_id}/indice-venta": {
+            "get": {
+                "operationId": "indiceVenta.show",
+                "tags": [
+                    "IndiceVenta"
+                ],
+                "parameters": [
+                    {
+                        "name": "silo_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "silo_id": {
+                                            "type": "integer"
+                                        },
+                                        "puntaje": {
+                                            "type": "integer"
+                                        },
+                                        "veredicto": {
+                                            "type": "string",
+                                            "const": "wait"
+                                        },
+                                        "reglas_aplicadas": {
+                                            "type": "array",
+                                            "prefixItems": [
+                                                {
+                                                    "anyOf": [
+                                                        {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "string",
+                                                                    "const": "margen"
+                                                                },
+                                                                "label": {
+                                                                    "type": "string",
+                                                                    "const": "Margen neto por ha"
+                                                                },
+                                                                "weight": {
+                                                                    "type": "integer",
+                                                                    "const": 25
+                                                                },
+                                                                "sub": {
+                                                                    "type": "string",
+                                                                    "const": "mercado"
+                                                                },
+                                                                "pass": {
+                                                                    "type": "boolean"
+                                                                },
+                                                                "detail": {
+                                                                    "type": "string"
+                                                                },
+                                                                "hint": {
+                                                                    "type": "string",
+                                                                    "enum": [
+                                                                        "El margen cubre los costos.",
+                                                                        "Con este precio el margen es negativo."
+                                                                    ]
+                                                                }
+                                                            },
+                                                            "required": [
+                                                                "id",
+                                                                "label",
+                                                                "weight",
+                                                                "sub",
+                                                                "pass",
+                                                                "detail",
+                                                                "hint"
+                                                            ]
+                                                        },
+                                                        {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "string",
+                                                                    "const": "margen"
+                                                                },
+                                                                "label": {
+                                                                    "type": "string",
+                                                                    "const": "Margen neto por ha"
+                                                                },
+                                                                "weight": {
+                                                                    "type": "integer",
+                                                                    "const": 25
+                                                                },
+                                                                "sub": {
+                                                                    "type": "string",
+                                                                    "const": "mercado"
+                                                                },
+                                                                "pass": {
+                                                                    "type": "boolean"
+                                                                },
+                                                                "detail": {
+                                                                    "anyOf": [
+                                                                        {
+                                                                            "type": "string"
+                                                                        },
+                                                                        {
+                                                                            "type": "string",
+                                                                            "enum": [
+                                                                                "No hay cotizaci\u00f3n del cultivo",
+                                                                                "No cargaste tus supuestos de margen",
+                                                                                "El silo no tiene cultivo asignado",
+                                                                                "Sin datos"
+                                                                            ]
+                                                                        }
+                                                                    ]
+                                                                },
+                                                                "hint": {
+                                                                    "type": "string",
+                                                                    "const": "Carg\u00e1 los supuestos con PUT /supuestos-margen/{tipo_cultivo_id}."
+                                                                }
+                                                            },
+                                                            "required": [
+                                                                "id",
+                                                                "label",
+                                                                "weight",
+                                                                "sub",
+                                                                "pass",
+                                                                "detail",
+                                                                "hint"
+                                                            ]
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "anyOf": [
+                                                        {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "string",
+                                                                    "const": "tendencia_precio"
+                                                                },
+                                                                "label": {
+                                                                    "type": "string",
+                                                                    "const": "Tendencia del precio"
+                                                                },
+                                                                "weight": {
+                                                                    "type": "integer",
+                                                                    "const": 25
+                                                                },
+                                                                "sub": {
+                                                                    "type": "string",
+                                                                    "const": "mercado"
+                                                                },
+                                                                "pass": {
+                                                                    "type": "boolean"
+                                                                },
+                                                                "detail": {
+                                                                    "type": "string"
+                                                                },
+                                                                "hint": {
+                                                                    "type": "string",
+                                                                    "enum": [
+                                                                        "El precio est\u00e1 por encima de su promedio.",
+                                                                        "El precio est\u00e1 por debajo de su promedio: conviene esperar."
+                                                                    ]
+                                                                }
+                                                            },
+                                                            "required": [
+                                                                "id",
+                                                                "label",
+                                                                "weight",
+                                                                "sub",
+                                                                "pass",
+                                                                "detail",
+                                                                "hint"
+                                                            ]
+                                                        },
+                                                        {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "string",
+                                                                    "const": "tendencia_precio"
+                                                                },
+                                                                "label": {
+                                                                    "type": "string",
+                                                                    "const": "Tendencia del precio"
+                                                                },
+                                                                "weight": {
+                                                                    "type": "integer",
+                                                                    "const": 25
+                                                                },
+                                                                "sub": {
+                                                                    "type": "string",
+                                                                    "const": "mercado"
+                                                                },
+                                                                "pass": {
+                                                                    "type": "boolean"
+                                                                },
+                                                                "detail": {
+                                                                    "type": "string"
+                                                                },
+                                                                "hint": {
+                                                                    "type": "string",
+                                                                    "const": "Hacen falta al menos 3 d\u00edas de cotizaciones."
+                                                                }
+                                                            },
+                                                            "required": [
+                                                                "id",
+                                                                "label",
+                                                                "weight",
+                                                                "sub",
+                                                                "pass",
+                                                                "detail",
+                                                                "hint"
+                                                            ]
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "anyOf": [
+                                                        {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "string",
+                                                                    "const": "humedad_grano"
+                                                                },
+                                                                "label": {
+                                                                    "type": "string",
+                                                                    "const": "Humedad del grano"
+                                                                },
+                                                                "weight": {
+                                                                    "type": "integer",
+                                                                    "const": 20
+                                                                },
+                                                                "sub": {
+                                                                    "type": "string",
+                                                                    "const": "calidad"
+                                                                },
+                                                                "pass": {
+                                                                    "type": "boolean"
+                                                                },
+                                                                "detail": {
+                                                                    "type": "string"
+                                                                },
+                                                                "hint": {
+                                                                    "type": "string",
+                                                                    "enum": [
+                                                                        "La humedad es apta para la entrega.",
+                                                                        "Grano h\u00famedo: puede tener descuentos o no ser recibido."
+                                                                    ]
+                                                                }
+                                                            },
+                                                            "required": [
+                                                                "id",
+                                                                "label",
+                                                                "weight",
+                                                                "sub",
+                                                                "pass",
+                                                                "detail",
+                                                                "hint"
+                                                            ]
+                                                        },
+                                                        {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "string",
+                                                                    "const": "humedad_grano"
+                                                                },
+                                                                "label": {
+                                                                    "type": "string",
+                                                                    "const": "Humedad del grano"
+                                                                },
+                                                                "weight": {
+                                                                    "type": "integer",
+                                                                    "const": 20
+                                                                },
+                                                                "sub": {
+                                                                    "type": "string",
+                                                                    "const": "calidad"
+                                                                },
+                                                                "pass": {
+                                                                    "type": "boolean"
+                                                                },
+                                                                "detail": {
+                                                                    "type": "string",
+                                                                    "const": "Sin medici\u00f3n"
+                                                                },
+                                                                "hint": {
+                                                                    "type": "string",
+                                                                    "const": "Registr\u00e1 una medici\u00f3n con PUT /silos/{id}/mediciones."
+                                                                }
+                                                            },
+                                                            "required": [
+                                                                "id",
+                                                                "label",
+                                                                "weight",
+                                                                "sub",
+                                                                "pass",
+                                                                "detail",
+                                                                "hint"
+                                                            ]
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "anyOf": [
+                                                        {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "string",
+                                                                    "const": "temperatura_nucleo"
+                                                                },
+                                                                "label": {
+                                                                    "type": "string",
+                                                                    "const": "Temperatura del n\u00facleo"
+                                                                },
+                                                                "weight": {
+                                                                    "type": "integer",
+                                                                    "const": 15
+                                                                },
+                                                                "sub": {
+                                                                    "type": "string",
+                                                                    "const": "almacenamiento"
+                                                                },
+                                                                "pass": {
+                                                                    "type": "boolean"
+                                                                },
+                                                                "detail": {
+                                                                    "type": "string"
+                                                                },
+                                                                "hint": {
+                                                                    "type": "string",
+                                                                    "enum": [
+                                                                        "Temperatura dentro del l\u00edmite.",
+                                                                        "El grano se est\u00e1 calentando: conviene vender o ventilar."
+                                                                    ]
+                                                                }
+                                                            },
+                                                            "required": [
+                                                                "id",
+                                                                "label",
+                                                                "weight",
+                                                                "sub",
+                                                                "pass",
+                                                                "detail",
+                                                                "hint"
+                                                            ]
+                                                        },
+                                                        {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "string",
+                                                                    "const": "temperatura_nucleo"
+                                                                },
+                                                                "label": {
+                                                                    "type": "string",
+                                                                    "const": "Temperatura del n\u00facleo"
+                                                                },
+                                                                "weight": {
+                                                                    "type": "integer",
+                                                                    "const": 15
+                                                                },
+                                                                "sub": {
+                                                                    "type": "string",
+                                                                    "const": "almacenamiento"
+                                                                },
+                                                                "pass": {
+                                                                    "type": "boolean"
+                                                                },
+                                                                "detail": {
+                                                                    "type": "string",
+                                                                    "const": "Sin medici\u00f3n"
+                                                                },
+                                                                "hint": {
+                                                                    "type": "string",
+                                                                    "const": "Registr\u00e1 una medici\u00f3n con PUT /silos/{id}/mediciones."
+                                                                }
+                                                            },
+                                                            "required": [
+                                                                "id",
+                                                                "label",
+                                                                "weight",
+                                                                "sub",
+                                                                "pass",
+                                                                "detail",
+                                                                "hint"
+                                                            ]
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "string",
+                                                            "const": "stock_disponible"
+                                                        },
+                                                        "label": {
+                                                            "type": "string",
+                                                            "const": "Stock disponible"
+                                                        },
+                                                        "weight": {
+                                                            "type": "integer",
+                                                            "const": 15
+                                                        },
+                                                        "sub": {
+                                                            "type": "string",
+                                                            "const": "almacenamiento"
+                                                        },
+                                                        "pass": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "detail": {
+                                                            "type": "string"
+                                                        },
+                                                        "hint": {
+                                                            "type": "string",
+                                                            "enum": [
+                                                                "Hay grano para vender.",
+                                                                "El silo est\u00e1 vac\u00edo."
+                                                            ]
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "id",
+                                                        "label",
+                                                        "weight",
+                                                        "sub",
+                                                        "pass",
+                                                        "detail",
+                                                        "hint"
+                                                    ]
+                                                }
+                                            ],
+                                            "minItems": 5,
+                                            "maxItems": 5
+                                        },
+                                        "calculado_en": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "silo_id",
+                                        "puntaje",
+                                        "veredicto",
+                                        "reglas_aplicadas",
+                                        "calculado_en"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "codigo": {
+                                            "type": "string",
+                                            "const": "no_encontrado"
+                                        },
+                                        "mensaje": {
+                                            "type": "string",
+                                            "const": "Recurso inexistente"
+                                        },
+                                        "detalles": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "codigo",
+                                        "mensaje",
+                                        "detalles"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "codigo": {
+                                            "type": "string",
+                                            "const": "servicio_no_disponible"
+                                        },
+                                        "mensaje": {
+                                            "type": "string",
+                                            "const": "El servicio de silos no responde"
+                                        },
+                                        "detalles": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "codigo",
+                                        "mensaje",
+                                        "detalles"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/silos/{silo_id}/indice-venta/historial": {
+            "get": {
+                "operationId": "indiceVenta.historial",
+                "tags": [
+                    "IndiceVenta"
+                ],
+                "parameters": [
+                    {
+                        "name": "silo_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "pagina": {
+                                                    "type": "integer"
+                                                },
+                                                "por_pagina": {
+                                                    "type": "integer"
+                                                },
+                                                "total": {
+                                                    "type": "integer"
+                                                },
+                                                "ultima_pagina": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "pagina",
+                                                "por_pagina",
+                                                "total",
+                                                "ultima_pagina"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/insumos": {
+            "get": {
+                "operationId": "insumo.index",
+                "tags": [
+                    "Insumo"
+                ],
+                "parameters": [
+                    {
+                        "name": "insumo",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "urea",
+                                "pda",
+                                "gasoil",
+                                null
+                            ]
+                        }
+                    },
+                    {
+                        "name": "desde",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "hasta",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "pagina": {
+                                                    "type": "integer"
+                                                },
+                                                "por_pagina": {
+                                                    "type": "integer"
+                                                },
+                                                "total": {
+                                                    "type": "integer"
+                                                },
+                                                "ultima_pagina": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "pagina",
+                                                "por_pagina",
+                                                "total",
+                                                "ultima_pagina"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "insumo.store",
+                "tags": [
+                    "Insumo"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "insumo": {
+                                        "type": "string",
+                                        "enum": [
+                                            "urea",
+                                            "pda",
+                                            "gasoil"
+                                        ]
+                                    },
+                                    "fecha": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "precio_usd": {
+                                        "type": "number",
+                                        "maximum": 99999999
+                                    }
+                                },
+                                "required": [
+                                    "insumo",
+                                    "fecha",
+                                    "precio_usd"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/interno/actualizar-precios": {
+            "post": {
+                "operationId": "interno.actualizarPrecios",
+                "tags": [
+                    "Interno"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "actualizaciones": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/RegistroActualizacion"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "actualizaciones"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/interno/simular/webhook-cotizacion": {
+            "post": {
+                "operationId": "interno.simularWebhook",
+                "tags": [
+                    "Interno"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "tipo_cultivo_id": {
+                                        "type": [
+                                            "integer",
+                                            "null"
+                                        ],
+                                        "minimum": 1
+                                    },
+                                    "precio_usd_tn": {
+                                        "type": [
+                                            "number",
+                                            "null"
+                                        ]
+                                    },
+                                    "repetir": {
+                                        "type": [
+                                            "integer",
+                                            "null"
+                                        ],
+                                        "minimum": 1,
+                                        "maximum": 5
+                                    },
+                                    "firma_invalida": {
+                                        "type": [
+                                            "boolean",
+                                            "null"
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "event_id": {
+                                            "type": "string"
+                                        },
+                                        "resultados": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "envio": {
+                                                        "type": "integer"
+                                                    },
+                                                    "estado": {
+                                                        "type": "integer",
+                                                        "enum": [
+                                                            200,
+                                                            422,
+                                                            401
+                                                        ]
+                                                    },
+                                                    "respuesta": {
+                                                        "anyOf": [
+                                                            {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "recibido": {
+                                                                        "type": "boolean"
+                                                                    },
+                                                                    "duplicado": {
+                                                                        "type": "boolean"
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "recibido",
+                                                                    "duplicado"
+                                                                ]
+                                                            },
+                                                            {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "codigo": {
+                                                                        "type": "string",
+                                                                        "const": "validacion"
+                                                                    },
+                                                                    "mensaje": {
+                                                                        "type": "string",
+                                                                        "const": "Datos inv\u00e1lidos"
+                                                                    },
+                                                                    "detalles": {
+                                                                        "type": "object",
+                                                                        "additionalProperties": {
+                                                                            "type": "array",
+                                                                            "items": {
+                                                                                "type": "string"
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "codigo",
+                                                                    "mensaje",
+                                                                    "detalles"
+                                                                ]
+                                                            },
+                                                            {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "codigo": {
+                                                                        "type": "string",
+                                                                        "const": "firma_invalida"
+                                                                    },
+                                                                    "mensaje": {
+                                                                        "type": "string",
+                                                                        "const": "La firma no coincide"
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "codigo",
+                                                                    "mensaje"
+                                                                ]
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                                "required": [
+                                                    "envio",
+                                                    "estado",
+                                                    "respuesta"
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "event_id",
+                                        "resultados"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/margen/{tipo_cultivo_id}": {
+            "get": {
+                "operationId": "margen.show",
+                "tags": [
+                    "Margen"
+                ],
+                "parameters": [
+                    {
+                        "name": "tipo_cultivo_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "anyOf": [
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "codigo": {
+                                                    "type": "string",
+                                                    "const": "sin_datos"
+                                                },
+                                                "mensaje": {
+                                                    "type": "string",
+                                                    "const": "No hay cotizaci\u00f3n de ese cultivo"
+                                                },
+                                                "detalles": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "codigo",
+                                                "mensaje",
+                                                "detalles"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "codigo": {
+                                                    "type": "string",
+                                                    "const": "supuestos_no_cargados"
+                                                },
+                                                "mensaje": {
+                                                    "type": "string",
+                                                    "const": "Carg\u00e1 tus supuestos de margen para este cultivo"
+                                                },
+                                                "detalles": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "codigo",
+                                                "mensaje",
+                                                "detalles"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/supuestos-margen/{tipo_cultivo_id}": {
+            "get": {
+                "operationId": "supuesto.show",
+                "tags": [
+                    "Supuesto"
+                ],
+                "parameters": [
+                    {
+                        "name": "tipo_cultivo_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SupuestoMargen"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "operationId": "supuesto.update",
+                "tags": [
+                    "Supuesto"
+                ],
+                "parameters": [
+                    {
+                        "name": "tipo_cultivo_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "rinde_tn_ha": {
+                                        "type": "number",
+                                        "maximum": 9999
+                                    },
+                                    "costo_directo_usd_ha": {
+                                        "type": "number",
+                                        "minimum": 0,
+                                        "maximum": 99999999
+                                    },
+                                    "costo_fertilizante_usd_ha": {
+                                        "type": [
+                                            "number",
+                                            "null"
+                                        ],
+                                        "minimum": 0,
+                                        "maximum": 99999999
+                                    },
+                                    "costo_comercial_pct": {
+                                        "type": [
+                                            "number",
+                                            "null"
+                                        ],
+                                        "minimum": 0,
+                                        "maximum": 100
+                                    },
+                                    "retencion_pct": {
+                                        "type": [
+                                            "number",
+                                            "null"
+                                        ],
+                                        "minimum": 0,
+                                        "maximum": 100
+                                    }
+                                },
+                                "required": [
+                                    "rinde_tn_ha",
+                                    "costo_directo_usd_ha"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SupuestoMargen"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/webhooks/cotizaciones": {
+            "post": {
+                "operationId": "webhook.cotizaciones",
+                "tags": [
+                    "Webhook"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "RegistroActualizacion": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "recurso": {
+                        "type": "string"
+                    },
+                    "proveedor": {
+                        "type": "string"
+                    },
+                    "intentado_en": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "ok": {
+                        "type": "boolean"
+                    },
+                    "detalle": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "recurso",
+                    "proveedor",
+                    "intentado_en",
+                    "ok",
+                    "detalle"
+                ],
+                "title": "RegistroActualizacion"
+            },
+            "SupuestoMargen": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "usuario_id": {
+                        "type": "integer"
+                    },
+                    "tipo_cultivo_id": {
+                        "type": "integer"
+                    },
+                    "rinde_tn_ha": {
+                        "type": "number"
+                    },
+                    "costo_directo_usd_ha": {
+                        "type": "number"
+                    },
+                    "costo_fertilizante_usd_ha": {
+                        "type": "number"
+                    },
+                    "costo_comercial_pct": {
+                        "type": "number"
+                    },
+                    "retencion_pct": {
+                        "type": "number"
+                    },
+                    "actualizado_en": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "id",
+                    "usuario_id",
+                    "tipo_cultivo_id",
+                    "rinde_tn_ha",
+                    "costo_directo_usd_ha",
+                    "costo_fertilizante_usd_ha",
+                    "costo_comercial_pct",
+                    "retencion_pct",
+                    "actualizado_en"
+                ],
+                "title": "SupuestoMargen"
+            }
+        },
+        "responses": {
+            "ValidationException": {
+                "description": "Validation error",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "description": "Errors overview."
+                                },
+                                "errors": {
+                                    "type": "object",
+                                    "description": "A detailed description of each field that failed validation.",
+                                    "additionalProperties": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            },
+                            "required": [
+                                "message",
+                                "errors"
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
