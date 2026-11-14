@@ -1,3 +1,5 @@
+import plugin from "tailwindcss/plugin";
+
 /** @type {import('tailwindcss').Config} */
 export default {
   darkMode: "class",
@@ -25,9 +27,12 @@ export default {
           950: "#04140a",
         },
         gold: {
+          100: "#f7f5d3",
+          200: "#f0edb8",
           300: "#e8e4a0",
           400: "#dcd88a",
           500: "#c9c46a",
+          600: "#a9a44a",
         },
       },
       boxShadow: {
@@ -36,5 +41,23 @@ export default {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    plugin(({ addBase, addUtilities }) => {
+      // Oculta todas las scrollbars (el scroll sigue funcionando)
+      addBase({
+        html: { scrollBehavior: "smooth", "-webkit-font-smoothing": "antialiased" },
+        "html, body, *": { scrollbarWidth: "none", "-ms-overflow-style": "none" },
+        "html::-webkit-scrollbar, body::-webkit-scrollbar, *::-webkit-scrollbar": {
+          display: "none",
+          width: "0",
+          height: "0",
+        },
+        "::selection": { backgroundColor: "rgba(220, 216, 138, 0.45)" },
+      });
+      addUtilities({
+        ".no-scrollbar": { scrollbarWidth: "none", "-ms-overflow-style": "none" },
+        ".no-scrollbar::-webkit-scrollbar": { display: "none" },
+      });
+    }),
+  ],
 };
