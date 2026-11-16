@@ -7,7 +7,7 @@ El sistema integra información productiva, telemetría de campo, condiciones me
 🌐 **Aplicación:** https://agronoma.site  
 🔗 **API Gateway:** https://api.agronoma.site/v1  
 📚 **Documentación académica:** [`/docs`](./docs/)  
-📖 **Documentación de APIs:** [`/documentacion-api`](./documentacion-api/)
+📖 **Documentación de APIs:** https://agronoma.site/docs#tokens
 
 ## Funcionalidades principales
 
