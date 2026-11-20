@@ -12,8 +12,8 @@ class RequiereAdmin
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if ($request->header('X-Usuario-Rol') !== 'admin') {
-            Log::warning('Intento de carga manual sin rol admin', [
+        if (! $request->attributes->get('es_admin')) {
+            Log::warning('Operación de administrador sin rol admin', [
                 'usuario_id' => $request->attributes->get('usuario_id'),
                 'ruta' => $request->path(),
             ]);

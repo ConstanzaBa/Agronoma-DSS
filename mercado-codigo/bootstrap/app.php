@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\DatoGlobalSoloSistema;
 use App\Http\Middleware\RequiereAdmin;
 use App\Http\Middleware\RequiereUsuario;
 use App\Http\Middleware\VerificarGatewaySecret;
@@ -23,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'gateway' => VerificarGatewaySecret::class,
             'usuario' => RequiereUsuario::class,
             'admin' => RequiereAdmin::class,
+            'dato_global' => DatoGlobalSoloSistema::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

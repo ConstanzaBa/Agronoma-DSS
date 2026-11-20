@@ -9,9 +9,9 @@ class CalculadoraMargen
     public function __construct(private Cotizaciones $cotizaciones) {}
 
     /** @return array{disponible:bool,motivo?:string} más los datos del cálculo cuando está disponible */
-    public function calcular(int $usuarioId, int $cultivoId): array
+    public function calcular(int $cuentaId, int $usuarioId, int $cultivoId): array
     {
-        $s = SupuestoMargen::where('usuario_id', $usuarioId)->where('tipo_cultivo_id', $cultivoId)->first();
+        $s = SupuestoMargen::deCuenta($cuentaId, $usuarioId)->where('tipo_cultivo_id', $cultivoId)->first();
 
         if (! $s) {
             return ['disponible' => false, 'motivo' => 'supuestos_no_cargados'];

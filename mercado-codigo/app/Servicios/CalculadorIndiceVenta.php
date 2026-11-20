@@ -12,11 +12,11 @@ class CalculadorIndiceVenta
     public function __construct(private CalculadoraMargen $margen, private Cotizaciones $cotizaciones) {}
 
     /** @param array $silo respuesta de silos /interno/silos/{id}/resumen */
-    public function calcular(array $silo, int $usuarioId): array
+    public function calcular(array $silo, int $cuentaId, int $usuarioId): array
     {
         $cultivoId = ! empty($silo['tipo_cultivo_id']) ? (int) $silo['tipo_cultivo_id'] : null;
         $margen = $cultivoId
-            ? $this->margen->calcular($usuarioId, $cultivoId)
+            ? $this->margen->calcular($cuentaId, $usuarioId, $cultivoId)
             : ['disponible' => false, 'motivo' => 'sin_cultivo'];
         $tendencia = $cultivoId
             ? $this->cotizaciones->tendencia($cultivoId)
@@ -39,6 +39,7 @@ class CalculadorIndiceVenta
         }
 
         $resultado = ResultadoIndiceVenta::create([
+            'cuenta_id' => $cuentaId,
             'usuario_id' => $usuarioId,
             'silo_id' => (int) $silo['silo_id'],
             'puntaje' => $puntaje,

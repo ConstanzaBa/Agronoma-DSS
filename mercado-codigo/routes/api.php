@@ -15,23 +15,28 @@ Route::pattern('silo_id', '[0-9]+');
 
 Route::middleware('gateway')->group(function () {
     Route::middleware('usuario')->group(function () {
+        // ── Globales de mercado: lectura para cualquier usuario autenticado ──
         Route::get('/cotizaciones', [CotizacionController::class, 'index']);
         Route::get('/cotizaciones/ultima', [CotizacionController::class, 'ultima']);
         Route::get('/divisas', [DivisaController::class, 'index']);
         Route::get('/divisas/ultima', [DivisaController::class, 'ultima']);
         Route::get('/insumos', [InsumoController::class, 'index']);
 
-        Route::get('/supuestos-margen/{tipo_cultivo_id}', [SupuestoController::class, 'show']);
-        Route::put('/supuestos-margen/{tipo_cultivo_id}', [SupuestoController::class, 'update']);
-        Route::get('/margen/{tipo_cultivo_id}', [MargenController::class, 'show']);
-
-        Route::get('/silos/{silo_id}/indice-venta', [IndiceVentaController::class, 'show']);
-        Route::get('/silos/{silo_id}/indice-venta/historial', [IndiceVentaController::class, 'historial']);
-
-        Route::middleware('admin')->group(function () {
+        // Escritura global: la bloquea para toda cuenta (ver DatoGlobalSoloSistema).
+        Route::middleware('dato_global')->group(function () {
             Route::post('/cotizaciones', [CotizacionController::class, 'store']);
             Route::post('/divisas', [DivisaController::class, 'store']);
             Route::post('/insumos', [InsumoController::class, 'store']);
+        });
+
+        // ── Información privada de la cuenta (costos, margen, decisiones de venta): solo admin ──
+        Route::middleware('admin')->group(function () {
+            Route::get('/supuestos-margen/{tipo_cultivo_id}', [SupuestoController::class, 'show']);
+            Route::put('/supuestos-margen/{tipo_cultivo_id}', [SupuestoController::class, 'update']);
+            Route::get('/margen/{tipo_cultivo_id}', [MargenController::class, 'show']);
+
+            Route::get('/silos/{silo_id}/indice-venta', [IndiceVentaController::class, 'show']);
+            Route::get('/silos/{silo_id}/indice-venta/historial', [IndiceVentaController::class, 'historial']);
         });
     });
 

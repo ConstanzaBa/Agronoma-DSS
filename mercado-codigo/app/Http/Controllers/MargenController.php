@@ -14,7 +14,7 @@ class MargenController extends Controller
     public function show(Request $request, int $tipo_cultivo_id, ActualizadorMercado $actualizador, CalculadoraMargen $calculadora): JsonResponse
     {
         $actualizador->asegurarHoy();
-        $r = $calculadora->calcular($request->attributes->get('usuario_id'), $tipo_cultivo_id);
+        $r = $calculadora->calcular($request->attributes->get('cuenta_id'), $request->attributes->get('usuario_id'), $tipo_cultivo_id);
 
         if (! $r['disponible']) {
             Log::info('Margen no disponible', ['motivo' => $r['motivo'], 'tipo_cultivo_id' => $tipo_cultivo_id]);
