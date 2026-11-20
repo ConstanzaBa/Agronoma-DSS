@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class SaludController extends Controller
 {
@@ -19,7 +20,12 @@ class SaludController extends Controller
 
             return response()->json(['estado' => 'ok', 'base' => 'ok']);
         } catch (\Throwable $e) {
-            return response()->json(['estado' => 'error', 'base' => 'caida'], 503);
+            Log::error('Error en health/ready: ' . $e->getMessage());
+
+            return response()->json([
+                'estado' => 'error',
+                'base' => 'caida'
+            ], 503);
         }
     }
 }

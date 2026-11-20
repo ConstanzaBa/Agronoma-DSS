@@ -22,10 +22,11 @@ class Usuario extends Model
         'activo',
     ];
 
-    protected $hidden = ['contrasena'];
+    protected $hidden = ['contrasena', 'cuenta_id']; // cuenta_id solo se expone por la API interna
 
     protected $casts = [
         'contrasena' => 'hashed',
         'activo' => 'boolean',
+        'primer_ingreso_pendiente' => 'boolean',
     ];
 }
