@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Servicios\CircuitBreaker;
+use App\Support\Respuesta;
 use App\Servicios\ClienteServicios;
 use Illuminate\Http\Client\Pool;
 use Illuminate\Http\Client\Response as RespuestaHttp;
@@ -16,6 +17,12 @@ class EstadoController extends Controller
 
     public function show(): JsonResponse
     {
+        // El estado interno de la plataforma no es para el administrador de una cuenta cliente (rol=admin):
+        // solo se habilita si el operador lo activa explícitamente.
+        if (! config('servicios.estado_para_admins')) {
+            return Respuesta::error('sin_permiso', 'Esta operación no está habilitada', 403);
+        }
+
         $nombres = array_keys(config('servicios.servicios'));
 
         $respuestas = Http::pool(function (Pool $pool) use ($nombres) {

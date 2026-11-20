@@ -53,7 +53,11 @@ class ValidadorToken
         }
 
         $identidad = $r->json();
-        Cache::put($clave, $identidad, (int) config('servicios.token_ttl'));
+        // Los tokens de dispositivo se cachean poco tiempo: al regenerarse en auth, el viejo deja de servir casi enseguida.
+        $ttl = ($identidad['autenticable'] ?? null) === 'dispositivo'
+            ? (int) config('servicios.token_ttl_dispositivo')
+            : (int) config('servicios.token_ttl');
+        Cache::put($clave, $identidad, $ttl);
 
         return $identidad;
     }

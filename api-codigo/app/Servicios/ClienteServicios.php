@@ -41,9 +41,14 @@ class ClienteServicios
         ];
 
         if ($identidad) {
+            // Si el contexto fue resuelto en Campo (silos/alertas/mercado), es la autoridad de rol, cuenta y estancia.
+            $contexto = $identidad['contexto'] ?? null;
+
             $cabeceras += [
                 'X-Usuario-Id' => $identidad['usuario_id'] ?? null,
-                'X-Usuario-Rol' => $identidad['rol'] ?? null,
+                'X-Cuenta-Id' => $contexto['cuenta_id'] ?? null,
+                'X-Usuario-Rol' => $contexto['rol'] ?? $identidad['rol'] ?? null,
+                'X-Establecimiento-Id' => $contexto['establecimiento_id'] ?? null,
                 'X-Autenticable-Tipo' => $identidad['autenticable'] ?? null,
                 'X-Autenticable-Id' => $identidad['autenticable_id'] ?? null,
             ];

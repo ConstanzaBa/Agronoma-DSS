@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Excepciones\ServicioNoDisponible;
+use App\Excepciones\SinCuenta;
 use App\Servicios\CircuitBreaker;
 use App\Servicios\ClienteServicios;
+use App\Servicios\ContextoUsuario;
 use App\Support\Respuesta;
 use Illuminate\Http\Client\Pool;
 use Illuminate\Http\Client\Response as RespuestaHttp;
@@ -20,7 +23,7 @@ class ResumenController extends Controller
         'alertas' => ['alertas', 'alertas?estado=active&por_pagina=50'],
     ];
 
-    public function __construct(private ClienteServicios $clientes) {}
+    public function __construct(private ClienteServicios $clientes, private ContextoUsuario $contexto) {}
 
     public function show(Request $request): JsonResponse
     {
@@ -28,6 +31,15 @@ class ResumenController extends Controller
 
         if (($identidad['autenticable'] ?? '') !== 'usuario') {
             return Respuesta::error('sin_permiso', 'El resumen es solo para personas', 403);
+        }
+
+        // Silos y alertas exigen cuenta/rol/estancia: se resuelven en Campo; sin contexto no se consulta a nadie.
+        try {
+            $identidad = $this->contexto->resolver($identidad);
+        } catch (SinCuenta $e) {
+            return Respuesta::error('sin_cuenta', 'El usuario no pertenece a ninguna cuenta', 403);
+        } catch (ServicioNoDisponible $e) {
+            return Respuesta::error('servicio_no_disponible', 'No se pudo resolver el contexto del usuario', 503);
         }
 
         $cabeceras = $this->clientes->cabeceras($identidad, $request->attributes->get('id_solicitud'));

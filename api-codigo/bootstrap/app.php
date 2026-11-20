@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\AutenticarToken;
+use App\Http\Middleware\BloquearPrimerIngreso;
 use App\Http\Middleware\Cors;
 use App\Http\Middleware\IdSolicitud;
 use App\Http\Middleware\LimitarPedidos;
@@ -24,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'autenticar' => AutenticarToken::class,
             'limitar' => LimitarPedidos::class,
             'admin' => RequiereAdmin::class,
+            'primer_ingreso' => BloquearPrimerIngreso::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

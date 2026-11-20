@@ -2,8 +2,10 @@
 
 return [
     'secreto' => env('GATEWAY_SECRET'),
+    'estado_para_admins' => (bool) env('ESTADO_PARA_ADMINS', false),
     'cors_origen' => env('CORS_ORIGEN', 'https://agronoma.site'),
     'token_ttl' => (int) env('TOKEN_CACHE_SEGUNDOS', 60),
+    'token_ttl_dispositivo' => (int) env('TOKEN_CACHE_DISPOSITIVO_SEGUNDOS', 5),
 
     'servicios' => [
         'auth' => ['url' => env('SERVICIO_AUTH_URL'), 'timeout' => 3],
