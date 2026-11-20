@@ -1,0 +1,3161 @@
+{
+    "openapi": "3.1.2",
+    "info": {
+        "title": "AgronomaCampo",
+        "version": "0.0.1"
+    },
+    "servers": [
+        {
+            "url": "http://127.0.0.1:8002/api/v1"
+        }
+    ],
+    "paths": {
+        "/establecimientos/{id}/clima": {
+            "get": {
+                "operationId": "clima.show",
+                "tags": [
+                    "Clima"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "503": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "codigo": {
+                                            "type": "string",
+                                            "const": "clima_no_disponible"
+                                        },
+                                        "mensaje": {
+                                            "type": "string",
+                                            "const": "No hay datos de clima disponibles"
+                                        },
+                                        "detalles": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "codigo",
+                                        "mensaje",
+                                        "detalles"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "anyOf": [
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "establecimiento_id": {
+                                                    "type": "integer"
+                                                },
+                                                "consultado_en": {
+                                                    "type": "string"
+                                                },
+                                                "actual": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "temperatura_c": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "humedad_pct": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "precipitacion_mm": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "viento_kmh": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "temperatura_c",
+                                                        "humedad_pct",
+                                                        "precipitacion_mm",
+                                                        "viento_kmh"
+                                                    ]
+                                                },
+                                                "pronostico": {
+                                                    "type": [
+                                                        "array",
+                                                        "null"
+                                                    ],
+                                                    "items": {}
+                                                },
+                                                "fuente": {
+                                                    "type": "string"
+                                                },
+                                                "desactualizada": {
+                                                    "type": "boolean"
+                                                }
+                                            },
+                                            "required": [
+                                                "establecimiento_id",
+                                                "consultado_en",
+                                                "actual",
+                                                "pronostico",
+                                                "fuente",
+                                                "desactualizada"
+                                            ]
+                                        },
+                                        {}
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/establecimientos/{id}/codigos": {
+            "post": {
+                "operationId": "codigoEstancia.store",
+                "summary": "POST /establecimientos/{id}/codigos: estancia propia y vigente; ajena o dada de baja \u2192 404",
+                "tags": [
+                    "CodigoEstancia"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "codigo": {
+                                            "type": "string"
+                                        },
+                                        "establecimiento_id": {
+                                            "type": "integer"
+                                        },
+                                        "estado": {
+                                            "type": "string"
+                                        },
+                                        "empleado_id": {
+                                            "type": [
+                                                "integer",
+                                                "null"
+                                            ]
+                                        },
+                                        "usado_en": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "creado_en": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "codigo",
+                                        "establecimiento_id",
+                                        "estado",
+                                        "empleado_id",
+                                        "usado_en",
+                                        "creado_en"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/codigos": {
+            "get": {
+                "operationId": "codigoEstancia.index",
+                "summary": "GET /codigos?estado=activo|usado|revocado",
+                "tags": [
+                    "CodigoEstancia"
+                ],
+                "parameters": [
+                    {
+                        "name": "estado",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "activo",
+                                "usado",
+                                "revocado",
+                                null
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "pagina": {
+                                                    "type": "integer"
+                                                },
+                                                "por_pagina": {
+                                                    "type": "integer"
+                                                },
+                                                "total": {
+                                                    "type": "integer"
+                                                },
+                                                "ultima_pagina": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "pagina",
+                                                "por_pagina",
+                                                "total",
+                                                "ultima_pagina"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/codigos/{id}": {
+            "delete": {
+                "operationId": "codigoEstancia.destroy",
+                "summary": "DELETE /codigos/{id}: revoca un c\u00f3digo activo. Revocar uno ya revocado es idempotente; uno usado no se revoca",
+                "tags": [
+                    "CodigoEstancia"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "codigo": {
+                                            "type": "string"
+                                        },
+                                        "establecimiento_id": {
+                                            "type": "integer"
+                                        },
+                                        "estado": {
+                                            "type": "string"
+                                        },
+                                        "empleado_id": {
+                                            "type": [
+                                                "integer",
+                                                "null"
+                                            ]
+                                        },
+                                        "usado_en": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "creado_en": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "codigo",
+                                        "establecimiento_id",
+                                        "estado",
+                                        "empleado_id",
+                                        "usado_en",
+                                        "creado_en"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "codigo": {
+                                            "type": "string",
+                                            "const": "conflicto"
+                                        },
+                                        "mensaje": {
+                                            "type": "string",
+                                            "const": "El c\u00f3digo ya fue usado"
+                                        },
+                                        "detalles": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "codigo",
+                                        "mensaje",
+                                        "detalles"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/interno/usuarios/{id}/contexto": {
+            "get": {
+                "operationId": "contextoInterno.mostrar",
+                "summary": "GET /interno/usuarios/{id}/contexto\nDevuelve lo necesario para X-Cuenta-Id, X-Usuario-Rol y (solo empleados) X-Establecimiento-Id.\nTodo sale de la base de Campo; el pedido solo aporta el usuario_id que el Gateway ya autentic\u00f3 en Auth",
+                "tags": [
+                    "ContextoInterno"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "usuario_id": {
+                                            "type": "integer"
+                                        },
+                                        "cuenta_id": {
+                                            "type": "integer"
+                                        },
+                                        "rol": {},
+                                        "establecimiento_id": {
+                                            "type": [
+                                                "integer",
+                                                "null"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "usuario_id",
+                                        "cuenta_id",
+                                        "rol",
+                                        "establecimiento_id"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "anyOf": [
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "codigo": {
+                                                    "type": "string",
+                                                    "const": "sin_cuenta"
+                                                },
+                                                "mensaje": {
+                                                    "type": "string",
+                                                    "const": "El usuario no tiene un rol v\u00e1lido"
+                                                },
+                                                "detalles": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "codigo",
+                                                "mensaje",
+                                                "detalles"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "codigo": {
+                                                    "type": "string",
+                                                    "const": "sin_cuenta"
+                                                },
+                                                "mensaje": {
+                                                    "type": "string",
+                                                    "const": "El usuario no pertenece a ninguna cuenta"
+                                                },
+                                                "detalles": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "codigo",
+                                                "mensaje",
+                                                "detalles"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/cuenta": {
+            "get": {
+                "operationId": "cuenta.show",
+                "summary": "GET /cuenta: plan, l\u00edmites y uso de la cuenta del administrador",
+                "tags": [
+                    "Cuenta"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "plan": {
+                                            "type": "string"
+                                        },
+                                        "estado": {
+                                            "type": "string"
+                                        },
+                                        "limites": {
+                                            "type": "array",
+                                            "items": {}
+                                        },
+                                        "uso": {
+                                            "type": "object",
+                                            "properties": {
+                                                "estancias": {
+                                                    "type": "integer",
+                                                    "minimum": 0
+                                                },
+                                                "lotes": {
+                                                    "type": "integer",
+                                                    "minimum": 0
+                                                },
+                                                "sensores": {
+                                                    "type": "integer",
+                                                    "minimum": 0
+                                                },
+                                                "empleados": {
+                                                    "type": "integer",
+                                                    "minimum": 0
+                                                }
+                                            },
+                                            "required": [
+                                                "estancias",
+                                                "lotes",
+                                                "sensores",
+                                                "empleados"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "plan",
+                                        "estado",
+                                        "limites",
+                                        "uso"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/cuenta/plan": {
+            "put": {
+                "operationId": "cuenta.cambiarPlan",
+                "summary": "PUT /cuenta/plan: cambio de plan simulado. Un plan menor se rechaza si el uso actual no cabe en \u00e9l",
+                "tags": [
+                    "Cuenta"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "plan": {
+                                        "type": "string",
+                                        "enum": [
+                                            "core",
+                                            "pro",
+                                            "enterprise"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "plan"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "plan": {
+                                            "type": "string"
+                                        },
+                                        "estado": {
+                                            "type": "string"
+                                        },
+                                        "limites": {
+                                            "type": "array",
+                                            "items": {}
+                                        },
+                                        "uso": {
+                                            "type": "object",
+                                            "properties": {
+                                                "estancias": {
+                                                    "type": "integer",
+                                                    "minimum": 0
+                                                },
+                                                "lotes": {
+                                                    "type": "integer",
+                                                    "minimum": 0
+                                                },
+                                                "sensores": {
+                                                    "type": "integer",
+                                                    "minimum": 0
+                                                },
+                                                "empleados": {
+                                                    "type": "integer",
+                                                    "minimum": 0
+                                                }
+                                            },
+                                            "required": [
+                                                "estancias",
+                                                "lotes",
+                                                "sensores",
+                                                "empleados"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "plan",
+                                        "estado",
+                                        "limites",
+                                        "uso"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "codigo": {
+                                            "type": "string",
+                                            "const": "plan_incompatible"
+                                        },
+                                        "mensaje": {
+                                            "type": "string",
+                                            "const": "El uso actual supera los l\u00edmites del plan elegido"
+                                        },
+                                        "detalles": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "codigo",
+                                        "mensaje",
+                                        "detalles"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/interno/cuentas": {
+            "post": {
+                "operationId": "cuentaInterna.store",
+                "summary": "POST /interno/cuentas: crea la cuenta del administrador reci\u00e9n creado en Auth",
+                "tags": [
+                    "CuentaInterna"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "administrador_usuario_id": {
+                                        "type": "integer",
+                                        "minimum": 1
+                                    },
+                                    "plan": {
+                                        "type": "string",
+                                        "enum": [
+                                            "core",
+                                            "pro",
+                                            "enterprise"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "administrador_usuario_id",
+                                    "plan"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "plan": {
+                                            "type": "string"
+                                        },
+                                        "administrador_usuario_id": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "plan",
+                                        "administrador_usuario_id"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "codigo": {
+                                            "type": "string",
+                                            "const": "conflicto"
+                                        },
+                                        "mensaje": {
+                                            "type": "string",
+                                            "const": "Ese usuario ya administra una cuenta"
+                                        },
+                                        "detalles": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "codigo",
+                                        "mensaje",
+                                        "detalles"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/interno/cuentas/administrador/{id}": {
+            "delete": {
+                "operationId": "cuentaInterna.compensar",
+                "summary": "DELETE /interno/cuentas/administrador/{id}: compensaci\u00f3n de una contrataci\u00f3n fallida.\nIdempotente, y solo borra cuentas sin estancias (una cuenta reci\u00e9n creada nunca las tiene)",
+                "tags": [
+                    "CuentaInterna"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "anyOf": [
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "mensaje": {
+                                                    "type": "string",
+                                                    "const": "Cuenta eliminada"
+                                                }
+                                            },
+                                            "required": [
+                                                "mensaje"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "mensaje": {
+                                                    "type": "string",
+                                                    "const": "Sin cuenta que compensar"
+                                                }
+                                            },
+                                            "required": [
+                                                "mensaje"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "codigo": {
+                                            "type": "string",
+                                            "const": "conflicto"
+                                        },
+                                        "mensaje": {
+                                            "type": "string",
+                                            "const": "La cuenta ya tiene datos; no se elimina"
+                                        },
+                                        "detalles": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "codigo",
+                                        "mensaje",
+                                        "detalles"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/dispositivos/{id}": {
+            "get": {
+                "operationId": "dispositivo.show",
+                "tags": [
+                    "Dispositivo"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Dispositivo"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "dispositivo.actualizar",
+                "summary": "PATCH /dispositivos/{id}: activa o desactiva el sensor. No toca el token (vive solo en Auth)",
+                "tags": [
+                    "Dispositivo"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "activo": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "required": [
+                                    "activo"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "anyOf": [
+                                        {
+                                            "$ref": "#/components/schemas/Dispositivo"
+                                        },
+                                        {
+                                            "type": "null"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/lotes/{id}/dispositivos": {
+            "post": {
+                "operationId": "dispositivo.store",
+                "tags": [
+                    "Dispositivo"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "nombre": {
+                                        "type": "string",
+                                        "maxLength": 80
+                                    },
+                                    "latitud": {
+                                        "type": [
+                                            "number",
+                                            "null"
+                                        ],
+                                        "minimum": -90,
+                                        "maximum": 90
+                                    },
+                                    "longitud": {
+                                        "type": [
+                                            "number",
+                                            "null"
+                                        ],
+                                        "minimum": -180,
+                                        "maximum": 180
+                                    }
+                                },
+                                "required": [
+                                    "nombre"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/dispositivos/{id}/token": {
+            "post": {
+                "operationId": "dispositivo.regenerarToken",
+                "summary": "POST /dispositivos/{id}/token: pide a Auth un token nuevo. Campo no lo guarda; se devuelve una sola vez",
+                "tags": [
+                    "Dispositivo"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "dispositivo": {
+                                            "$ref": "#/components/schemas/Dispositivo"
+                                        },
+                                        "token": {},
+                                        "permisos": {},
+                                        "aviso": {
+                                            "type": "string",
+                                            "const": "Guardalo ahora: no se vuelve a mostrar. El token anterior deja de servir."
+                                        }
+                                    },
+                                    "required": [
+                                        "dispositivo",
+                                        "token",
+                                        "permisos",
+                                        "aviso"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "codigo": {
+                                            "type": "string",
+                                            "const": "servicio_no_disponible"
+                                        },
+                                        "mensaje": {
+                                            "type": "string",
+                                            "const": "No se pudo emitir el token del sensor"
+                                        },
+                                        "detalles": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "codigo",
+                                        "mensaje",
+                                        "detalles"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/empleados": {
+            "get": {
+                "operationId": "empleado.index",
+                "tags": [
+                    "Empleado"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "pagina": {
+                                                    "type": "integer"
+                                                },
+                                                "por_pagina": {
+                                                    "type": "integer"
+                                                },
+                                                "total": {
+                                                    "type": "integer"
+                                                },
+                                                "ultima_pagina": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "pagina",
+                                                "por_pagina",
+                                                "total",
+                                                "ultima_pagina"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/empleados/{id}": {
+            "get": {
+                "operationId": "empleado.show",
+                "tags": [
+                    "Empleado"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "usuario_id": {
+                                            "type": "integer"
+                                        },
+                                        "rol": {
+                                            "type": "string"
+                                        },
+                                        "estado": {
+                                            "type": "string"
+                                        },
+                                        "estancia": {
+                                            "type": [
+                                                "object",
+                                                "null"
+                                            ],
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer"
+                                                },
+                                                "nombre": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "id",
+                                                "nombre"
+                                            ]
+                                        },
+                                        "usuario": {
+                                            "type": [
+                                                "array",
+                                                "null"
+                                            ],
+                                            "items": {}
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "usuario_id",
+                                        "rol",
+                                        "estado",
+                                        "estancia",
+                                        "usuario"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "empleado.baja",
+                "summary": "DELETE /empleados/{id}: baja l\u00f3gica coordinada. Primero se desactiva el usuario en Auth (si falla, no se\ncambia nada y se puede reintentar); despu\u00e9s se da de baja en Campo, lo que libera el cupo del plan",
+                "tags": [
+                    "Empleado"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "usuario_id": {
+                                            "type": "integer"
+                                        },
+                                        "rol": {
+                                            "type": "string"
+                                        },
+                                        "estado": {
+                                            "type": "string"
+                                        },
+                                        "estancia": {
+                                            "type": [
+                                                "object",
+                                                "null"
+                                            ],
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer"
+                                                },
+                                                "nombre": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "id",
+                                                "nombre"
+                                            ]
+                                        },
+                                        "usuario": {
+                                            "type": [
+                                                "array",
+                                                "null"
+                                            ],
+                                            "items": {}
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "usuario_id",
+                                        "rol",
+                                        "estado",
+                                        "estancia",
+                                        "usuario"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "codigo": {
+                                            "type": "string",
+                                            "const": "servicio_no_disponible"
+                                        },
+                                        "mensaje": {
+                                            "type": "string",
+                                            "const": "No se pudo dar de baja al empleado; reintent\u00e1"
+                                        },
+                                        "detalles": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "codigo",
+                                        "mensaje",
+                                        "detalles"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/interno/empleados/registrar": {
+            "post": {
+                "operationId": "empleadoInterno.registrar",
+                "summary": "POST /interno/empleados/registrar. En una sola transacci\u00f3n: valida el c\u00f3digo, aplica el l\u00edmite del plan,\ncrea empleado + asignaci\u00f3n y consume el c\u00f3digo. La cuenta y la estancia salen del c\u00f3digo, nunca del pedido",
+                "tags": [
+                    "EmpleadoInterno"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "codigo": {
+                                        "type": "string",
+                                        "maxLength": 64
+                                    },
+                                    "usuario_id": {
+                                        "type": "integer",
+                                        "minimum": 1
+                                    },
+                                    "rol": {
+                                        "type": "string",
+                                        "enum": [
+                                            "productor",
+                                            "ingeniero_agronomo",
+                                            "asesor_tecnico",
+                                            "contratista",
+                                            "otro"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "codigo",
+                                    "usuario_id",
+                                    "rol"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "empleado_id": {
+                                            "type": "integer"
+                                        },
+                                        "establecimiento_id": {
+                                            "type": "integer"
+                                        },
+                                        "establecimiento_nombre": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "empleado_id",
+                                        "establecimiento_id",
+                                        "establecimiento_nombre"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "codigo": {
+                                            "type": "string",
+                                            "const": "limite_plan"
+                                        },
+                                        "mensaje": {
+                                            "type": "string",
+                                            "const": "La cuenta alcanz\u00f3 el l\u00edmite de empleados de su plan"
+                                        },
+                                        "detalles": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "codigo",
+                                        "mensaje",
+                                        "detalles"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "codigo": {
+                                            "type": "string",
+                                            "const": "conflicto"
+                                        },
+                                        "mensaje": {
+                                            "type": "string",
+                                            "const": "El usuario ya pertenece a una cuenta"
+                                        },
+                                        "detalles": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "codigo",
+                                        "mensaje",
+                                        "detalles"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/interno/empleados/usuario/{id}/registro": {
+            "delete": {
+                "operationId": "empleadoInterno.compensar",
+                "summary": "DELETE /interno/empleados/usuario/{id}/registro: compensaci\u00f3n de un registro que Auth no pudo completar.\nIdempotente: borra empleado y asignaci\u00f3n, y deja el c\u00f3digo otra vez activo",
+                "tags": [
+                    "EmpleadoInterno"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "anyOf": [
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "mensaje": {
+                                                    "type": "string",
+                                                    "const": "Registro deshecho"
+                                                }
+                                            },
+                                            "required": [
+                                                "mensaje"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "mensaje": {
+                                                    "type": "string",
+                                                    "const": "Sin registro que compensar"
+                                                }
+                                            },
+                                            "required": [
+                                                "mensaje"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/establecimientos": {
+            "get": {
+                "operationId": "establecimiento.index",
+                "tags": [
+                    "Establecimiento"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "pagina": {
+                                                    "type": "integer"
+                                                },
+                                                "por_pagina": {
+                                                    "type": "integer"
+                                                },
+                                                "total": {
+                                                    "type": "integer"
+                                                },
+                                                "ultima_pagina": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "pagina",
+                                                "por_pagina",
+                                                "total",
+                                                "ultima_pagina"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "operationId": "establecimiento.store",
+                "tags": [
+                    "Establecimiento"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "nombre": {
+                                        "type": "string",
+                                        "maxLength": 120
+                                    },
+                                    "zona_administrativa": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 150
+                                    },
+                                    "latitud_centro": {
+                                        "type": "number",
+                                        "minimum": -90,
+                                        "maximum": 90
+                                    },
+                                    "longitud_centro": {
+                                        "type": "number",
+                                        "minimum": -180,
+                                        "maximum": 180
+                                    },
+                                    "zoom": {
+                                        "type": [
+                                            "integer",
+                                            "null"
+                                        ],
+                                        "minimum": 1,
+                                        "maximum": 22
+                                    }
+                                },
+                                "required": [
+                                    "nombre",
+                                    "latitud_centro",
+                                    "longitud_centro"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/establecimientos/{id}": {
+            "get": {
+                "operationId": "establecimiento.show",
+                "tags": [
+                    "Establecimiento"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Establecimiento"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "operationId": "establecimiento.update",
+                "tags": [
+                    "Establecimiento"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "nombre": {
+                                        "type": "string",
+                                        "maxLength": 120
+                                    },
+                                    "zona_administrativa": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 150
+                                    },
+                                    "latitud_centro": {
+                                        "type": "number",
+                                        "minimum": -90,
+                                        "maximum": 90
+                                    },
+                                    "longitud_centro": {
+                                        "type": "number",
+                                        "minimum": -180,
+                                        "maximum": 180
+                                    },
+                                    "zoom": {
+                                        "type": [
+                                            "integer",
+                                            "null"
+                                        ],
+                                        "minimum": 1,
+                                        "maximum": 22
+                                    }
+                                },
+                                "required": [
+                                    "nombre",
+                                    "latitud_centro",
+                                    "longitud_centro"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Establecimiento"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "establecimiento.destroy",
+                "tags": [
+                    "Establecimiento"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "const": "Establecimiento eliminado"
+                                        }
+                                    },
+                                    "required": [
+                                        "mensaje"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/interno/establecimientos/{id}/pertenece/{cuenta_id}": {
+            "get": {
+                "operationId": "establecimientoInterno.pertenece",
+                "summary": "GET /interno/establecimientos/{id}/pertenece/{cuenta_id}\nResponde 200 con pertenece=true solo si la estancia existe, est\u00e1 vigente (no dada de baja) y es de esa cuenta.\nCualquier otro caso (inexistente, dada de baja o de otra cuenta) es pertenece=false, sin distinguirlos",
+                "tags": [
+                    "EstablecimientoInterno"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "cuenta_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "pertenece": {
+                                            "type": "boolean"
+                                        },
+                                        "establecimiento_id": {
+                                            "type": "integer"
+                                        },
+                                        "cuenta_id": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "required": [
+                                        "pertenece",
+                                        "establecimiento_id",
+                                        "cuenta_id"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/lotes/{id}/lecturas": {
+            "get": {
+                "operationId": "lectura.index",
+                "tags": [
+                    "Lectura"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "desde",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "name": "hasta",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "date-time"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "pagina": {
+                                                    "type": "integer"
+                                                },
+                                                "por_pagina": {
+                                                    "type": "integer"
+                                                },
+                                                "total": {
+                                                    "type": "integer"
+                                                },
+                                                "ultima_pagina": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "pagina",
+                                                "por_pagina",
+                                                "total",
+                                                "ultima_pagina"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/lecturas": {
+            "post": {
+                "operationId": "lectura.store",
+                "tags": [
+                    "Lectura"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "secuencia": {
+                                        "type": "integer",
+                                        "minimum": 0
+                                    },
+                                    "humedad_suelo_pct": {
+                                        "type": "number",
+                                        "minimum": 0,
+                                        "maximum": 100
+                                    },
+                                    "humedad_aire_pct": {
+                                        "type": "number",
+                                        "minimum": 0,
+                                        "maximum": 100
+                                    },
+                                    "temperatura_c": {
+                                        "type": "number",
+                                        "minimum": -60,
+                                        "maximum": 80
+                                    },
+                                    "precipitacion_mm": {
+                                        "type": [
+                                            "number",
+                                            "null"
+                                        ],
+                                        "minimum": 0
+                                    },
+                                    "medido_en": {
+                                        "type": "string",
+                                        "format": "date-time"
+                                    }
+                                },
+                                "required": [
+                                    "secuencia",
+                                    "humedad_suelo_pct",
+                                    "humedad_aire_pct",
+                                    "temperatura_c",
+                                    "medido_en"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "codigo": {
+                                            "type": "string",
+                                            "const": "sin_permiso"
+                                        },
+                                        "mensaje": {
+                                            "type": "string",
+                                            "const": "Dispositivo inexistente o inactivo"
+                                        },
+                                        "detalles": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "codigo",
+                                        "mensaje",
+                                        "detalles"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/lotes/{id}/lluvia": {
+            "get": {
+                "operationId": "lluvia.index",
+                "tags": [
+                    "Lluvia"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "desde",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "hasta",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "pagina": {
+                                                    "type": "integer"
+                                                },
+                                                "por_pagina": {
+                                                    "type": "integer"
+                                                },
+                                                "total": {
+                                                    "type": "integer"
+                                                },
+                                                "ultima_pagina": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "pagina",
+                                                "por_pagina",
+                                                "total",
+                                                "ultima_pagina"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "lluvia.store",
+                "tags": [
+                    "Lluvia"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "milimetros": {
+                                        "type": "number",
+                                        "minimum": 0,
+                                        "maximum": 1000
+                                    },
+                                    "fecha_registro": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "observacion": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 255
+                                    },
+                                    "clave_idempotencia": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    }
+                                },
+                                "required": [
+                                    "milimetros",
+                                    "fecha_registro",
+                                    "clave_idempotencia"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RegistroLluvia"
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "anyOf": [
+                                        {
+                                            "$ref": "#/components/schemas/RegistroLluvia"
+                                        },
+                                        {
+                                            "type": "null"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "codigo": {
+                                            "type": "string",
+                                            "const": "conflicto"
+                                        },
+                                        "mensaje": {
+                                            "type": "string",
+                                            "const": "La clave de idempotencia ya se us\u00f3 en otro lote"
+                                        },
+                                        "detalles": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "codigo",
+                                        "mensaje",
+                                        "detalles"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/establecimientos/{id}/lotes": {
+            "get": {
+                "operationId": "lote.index",
+                "tags": [
+                    "Lote"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "pagina": {
+                                                    "type": "integer"
+                                                },
+                                                "por_pagina": {
+                                                    "type": "integer"
+                                                },
+                                                "total": {
+                                                    "type": "integer"
+                                                },
+                                                "ultima_pagina": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "pagina",
+                                                "por_pagina",
+                                                "total",
+                                                "ultima_pagina"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "operationId": "lote.store",
+                "tags": [
+                    "Lote"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "nombre": {
+                                        "type": "string",
+                                        "maxLength": 120
+                                    },
+                                    "coordenadas": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "number"
+                                            },
+                                            "minItems": 2,
+                                            "maxItems": 2
+                                        },
+                                        "minItems": 3
+                                    },
+                                    "superficie_ha": {
+                                        "type": "number"
+                                    },
+                                    "tipo_cultivo_id": {
+                                        "type": [
+                                            "integer",
+                                            "null"
+                                        ]
+                                    },
+                                    "variedad": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 80
+                                    }
+                                },
+                                "required": [
+                                    "nombre",
+                                    "coordenadas",
+                                    "superficie_ha"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/lotes": {
+            "get": {
+                "operationId": "lote.todos",
+                "tags": [
+                    "Lote"
+                ],
+                "parameters": [
+                    {
+                        "name": "establecimiento_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "pagina": {
+                                                    "type": "integer"
+                                                },
+                                                "por_pagina": {
+                                                    "type": "integer"
+                                                },
+                                                "total": {
+                                                    "type": "integer"
+                                                },
+                                                "ultima_pagina": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "pagina",
+                                                "por_pagina",
+                                                "total",
+                                                "ultima_pagina"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/lotes/{id}": {
+            "get": {
+                "operationId": "lote.show",
+                "tags": [
+                    "Lote"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Lote"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "operationId": "lote.update",
+                "tags": [
+                    "Lote"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "nombre": {
+                                        "type": "string",
+                                        "maxLength": 120
+                                    },
+                                    "coordenadas": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "number"
+                                            },
+                                            "minItems": 2,
+                                            "maxItems": 2
+                                        },
+                                        "minItems": 3
+                                    },
+                                    "superficie_ha": {
+                                        "type": "number"
+                                    },
+                                    "tipo_cultivo_id": {
+                                        "type": [
+                                            "integer",
+                                            "null"
+                                        ]
+                                    },
+                                    "variedad": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 80
+                                    }
+                                },
+                                "required": [
+                                    "nombre",
+                                    "coordenadas",
+                                    "superficie_ha"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Lote"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "lote.destroy",
+                "tags": [
+                    "Lote"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "const": "Lote eliminado"
+                                        }
+                                    },
+                                    "required": [
+                                        "mensaje"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/interno/simular/sensor": {
+            "post": {
+                "operationId": "simulador.sensor",
+                "tags": [
+                    "Simulador"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "dispositivo_id": {
+                                        "type": "integer",
+                                        "minimum": 1
+                                    },
+                                    "modo": {
+                                        "type": "string",
+                                        "enum": [
+                                            "normal",
+                                            "repetida",
+                                            "desordenada"
+                                        ]
+                                    },
+                                    "cantidad": {
+                                        "type": [
+                                            "integer",
+                                            "null"
+                                        ],
+                                        "minimum": 1,
+                                        "maximum": 20
+                                    }
+                                },
+                                "required": [
+                                    "dispositivo_id",
+                                    "modo"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "modo": {
+                                            "type": "string"
+                                        },
+                                        "resultados": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "secuencia": {
+                                                        "type": "string"
+                                                    },
+                                                    "estado": {
+                                                        "type": "integer",
+                                                        "enum": [
+                                                            201,
+                                                            200,
+                                                            409,
+                                                            403
+                                                        ]
+                                                    },
+                                                    "respuesta": {
+                                                        "anyOf": [
+                                                            {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "duplicada": {
+                                                                        "type": "boolean"
+                                                                    },
+                                                                    "actualiza_cache": {
+                                                                        "type": "boolean"
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "id",
+                                                                    "duplicada",
+                                                                    "actualiza_cache"
+                                                                ]
+                                                            },
+                                                            {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "duplicada": {
+                                                                        "type": "boolean"
+                                                                    },
+                                                                    "secuencia": {
+                                                                        "type": "integer"
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "duplicada",
+                                                                    "secuencia"
+                                                                ]
+                                                            },
+                                                            {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "codigo": {
+                                                                        "type": "string",
+                                                                        "const": "secuencia_conflicto"
+                                                                    },
+                                                                    "mensaje": {
+                                                                        "type": "string",
+                                                                        "const": "Esa secuencia ya existe con otros datos"
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "codigo",
+                                                                    "mensaje"
+                                                                ]
+                                                            },
+                                                            {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "codigo": {
+                                                                        "type": "string",
+                                                                        "const": "sin_permiso"
+                                                                    },
+                                                                    "mensaje": {
+                                                                        "type": "string",
+                                                                        "const": "Dispositivo inexistente o inactivo"
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "codigo",
+                                                                    "mensaje"
+                                                                ]
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                                "required": [
+                                                    "secuencia",
+                                                    "estado",
+                                                    "respuesta"
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "modo",
+                                        "resultados"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "codigo": {
+                                            "type": "string",
+                                            "const": "sin_permiso"
+                                        },
+                                        "mensaje": {
+                                            "type": "string",
+                                            "const": "Dispositivo inexistente o inactivo"
+                                        },
+                                        "detalles": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "codigo",
+                                        "mensaje",
+                                        "detalles"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "codigo": {
+                                            "type": "string",
+                                            "const": "no_encontrado"
+                                        },
+                                        "mensaje": {
+                                            "type": "string",
+                                            "const": "Dispositivo inexistente"
+                                        },
+                                        "detalles": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "codigo",
+                                        "mensaje",
+                                        "detalles"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/tipos-cultivo": {
+            "get": {
+                "operationId": "tipoCultivo.index",
+                "tags": [
+                    "TipoCultivo"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/TipoCultivo"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "Dispositivo": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "lote_id": {
+                        "type": "integer"
+                    },
+                    "nombre": {
+                        "type": "string"
+                    },
+                    "identificador_unico": {
+                        "type": "string"
+                    },
+                    "latitud": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "longitud": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "activo": {
+                        "type": "boolean"
+                    },
+                    "ultima_conexion_en": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "ultima_secuencia": {
+                        "type": "integer"
+                    },
+                    "creado_en": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "actualizado_en": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "id",
+                    "lote_id",
+                    "nombre",
+                    "identificador_unico",
+                    "latitud",
+                    "longitud",
+                    "activo",
+                    "ultima_conexion_en",
+                    "ultima_secuencia",
+                    "creado_en",
+                    "actualizado_en"
+                ],
+                "title": "Dispositivo"
+            },
+            "Establecimiento": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "cuenta_id": {
+                        "type": "integer"
+                    },
+                    "nombre": {
+                        "type": "string"
+                    },
+                    "zona_administrativa": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "latitud_centro": {
+                        "type": "number"
+                    },
+                    "longitud_centro": {
+                        "type": "number"
+                    },
+                    "zoom": {
+                        "type": "integer"
+                    },
+                    "creado_en": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "actualizado_en": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "id",
+                    "cuenta_id",
+                    "nombre",
+                    "zona_administrativa",
+                    "latitud_centro",
+                    "longitud_centro",
+                    "zoom",
+                    "creado_en",
+                    "actualizado_en"
+                ],
+                "title": "Establecimiento"
+            },
+            "Lote": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "establecimiento_id": {
+                        "type": "integer"
+                    },
+                    "nombre": {
+                        "type": "string"
+                    },
+                    "coordenadas": {
+                        "type": "array",
+                        "items": {}
+                    },
+                    "superficie_ha": {
+                        "type": "number"
+                    },
+                    "tipo_cultivo_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "variedad": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "estado": {
+                        "type": "string"
+                    },
+                    "ultima_humedad_suelo_pct": {
+                        "type": [
+                            "number",
+                            "null"
+                        ]
+                    },
+                    "creado_en": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "actualizado_en": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "id",
+                    "establecimiento_id",
+                    "nombre",
+                    "coordenadas",
+                    "superficie_ha",
+                    "tipo_cultivo_id",
+                    "variedad",
+                    "estado",
+                    "ultima_humedad_suelo_pct",
+                    "creado_en",
+                    "actualizado_en"
+                ],
+                "title": "Lote"
+            },
+            "RegistroLluvia": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "lote_id": {
+                        "type": "integer"
+                    },
+                    "usuario_id": {
+                        "type": "integer"
+                    },
+                    "milimetros": {
+                        "type": "number"
+                    },
+                    "fecha_registro": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "observacion": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "clave_idempotencia": {
+                        "type": "string"
+                    },
+                    "creado_en": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "id",
+                    "lote_id",
+                    "usuario_id",
+                    "milimetros",
+                    "fecha_registro",
+                    "observacion",
+                    "clave_idempotencia",
+                    "creado_en"
+                ],
+                "title": "RegistroLluvia"
+            },
+            "TipoCultivo": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "nombre": {
+                        "type": "string"
+                    },
+                    "limite_humedad_pct": {
+                        "type": [
+                            "number",
+                            "null"
+                        ]
+                    },
+                    "dias_almacenamiento_seguro": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "nombre",
+                    "limite_humedad_pct",
+                    "dias_almacenamiento_seguro"
+                ],
+                "title": "TipoCultivo"
+            }
+        },
+        "responses": {
+            "ValidationException": {
+                "description": "Validation error",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "description": "Errors overview."
+                                },
+                                "errors": {
+                                    "type": "object",
+                                    "description": "A detailed description of each field that failed validation.",
+                                    "additionalProperties": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            },
+                            "required": [
+                                "message",
+                                "errors"
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

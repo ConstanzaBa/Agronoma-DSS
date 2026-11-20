@@ -1,0 +1,751 @@
+{
+    "openapi": "3.1.2",
+    "info": {
+        "title": "AgronomaSilos",
+        "version": "0.0.1"
+    },
+    "servers": [
+        {
+            "url": "http://127.0.0.1:8003/api/v1"
+        }
+    ],
+    "paths": {
+        "/interno/silos/{id}/resumen": {
+            "get": {
+                "operationId": "interno.resumen",
+                "tags": [
+                    "Interno"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "silo_id": {
+                                            "type": "integer"
+                                        },
+                                        "cuenta_id": {
+                                            "type": [
+                                                "integer",
+                                                "null"
+                                            ]
+                                        },
+                                        "establecimiento_id": {
+                                            "type": "integer"
+                                        },
+                                        "usuario_id": {
+                                            "type": "integer"
+                                        },
+                                        "tipo_cultivo_id": {
+                                            "type": [
+                                                "integer",
+                                                "null"
+                                            ]
+                                        },
+                                        "humedad_grano_pct": {
+                                            "type": [
+                                                "number",
+                                                "null"
+                                            ]
+                                        },
+                                        "temperatura_nucleo_c": {
+                                            "type": [
+                                                "number",
+                                                "null"
+                                            ]
+                                        },
+                                        "temperatura_limite_c": {
+                                            "type": "number"
+                                        },
+                                        "capacidad_tn": {
+                                            "type": "number"
+                                        },
+                                        "almacenado_desde": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "stock_tn": {
+                                            "type": "number"
+                                        }
+                                    },
+                                    "required": [
+                                        "silo_id",
+                                        "cuenta_id",
+                                        "establecimiento_id",
+                                        "usuario_id",
+                                        "tipo_cultivo_id",
+                                        "humedad_grano_pct",
+                                        "temperatura_nucleo_c",
+                                        "temperatura_limite_c",
+                                        "capacidad_tn",
+                                        "almacenado_desde",
+                                        "stock_tn"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/silos/{id}/movimientos": {
+            "get": {
+                "operationId": "movimiento.index",
+                "tags": [
+                    "Movimiento"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "desde",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "hasta",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "pagina": {
+                                                    "type": "integer"
+                                                },
+                                                "por_pagina": {
+                                                    "type": "integer"
+                                                },
+                                                "total": {
+                                                    "type": "integer"
+                                                },
+                                                "ultima_pagina": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "pagina",
+                                                "por_pagina",
+                                                "total",
+                                                "ultima_pagina"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "movimiento.store",
+                "tags": [
+                    "Movimiento"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "direccion": {
+                                        "type": "string",
+                                        "enum": [
+                                            "in",
+                                            "out"
+                                        ]
+                                    },
+                                    "toneladas": {
+                                        "type": "number",
+                                        "maximum": 99999999
+                                    },
+                                    "fecha_movimiento": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "observacion": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 255
+                                    },
+                                    "clave_idempotencia": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    }
+                                },
+                                "required": [
+                                    "direccion",
+                                    "toneladas",
+                                    "fecha_movimiento",
+                                    "clave_idempotencia"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "codigo": {
+                                            "type": "string",
+                                            "const": "conflicto"
+                                        },
+                                        "mensaje": {
+                                            "type": "string",
+                                            "const": "La clave de idempotencia ya se us\u00f3 en otro silo"
+                                        },
+                                        "detalles": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "codigo",
+                                        "mensaje",
+                                        "detalles"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/silos": {
+            "get": {
+                "operationId": "silo.index",
+                "tags": [
+                    "Silo"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "pagina": {
+                                                    "type": "integer"
+                                                },
+                                                "por_pagina": {
+                                                    "type": "integer"
+                                                },
+                                                "total": {
+                                                    "type": "integer"
+                                                },
+                                                "ultima_pagina": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "pagina",
+                                                "por_pagina",
+                                                "total",
+                                                "ultima_pagina"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "operationId": "silo.store",
+                "tags": [
+                    "Silo"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "nombre": {
+                                        "type": "string",
+                                        "maxLength": 80
+                                    },
+                                    "tipo": {
+                                        "type": "string",
+                                        "enum": [
+                                            "silo",
+                                            "silobolsa"
+                                        ]
+                                    },
+                                    "capacidad_tn": {
+                                        "type": "number",
+                                        "maximum": 99999999
+                                    },
+                                    "tipo_cultivo_id": {
+                                        "type": [
+                                            "integer",
+                                            "null"
+                                        ],
+                                        "minimum": 1
+                                    },
+                                    "temperatura_limite_c": {
+                                        "type": [
+                                            "number",
+                                            "null"
+                                        ],
+                                        "minimum": -50,
+                                        "maximum": 99.9
+                                    },
+                                    "establecimiento_id": {
+                                        "type": "integer",
+                                        "minimum": 1
+                                    }
+                                },
+                                "required": [
+                                    "nombre",
+                                    "tipo",
+                                    "capacidad_tn",
+                                    "establecimiento_id"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/silos/{id}": {
+            "get": {
+                "operationId": "silo.show",
+                "tags": [
+                    "Silo"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {}
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "operationId": "silo.update",
+                "tags": [
+                    "Silo"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "nombre": {
+                                        "type": "string",
+                                        "maxLength": 80
+                                    },
+                                    "tipo": {
+                                        "type": "string",
+                                        "enum": [
+                                            "silo",
+                                            "silobolsa"
+                                        ]
+                                    },
+                                    "capacidad_tn": {
+                                        "type": "number",
+                                        "maximum": 99999999
+                                    },
+                                    "tipo_cultivo_id": {
+                                        "type": [
+                                            "integer",
+                                            "null"
+                                        ],
+                                        "minimum": 1
+                                    },
+                                    "temperatura_limite_c": {
+                                        "type": [
+                                            "number",
+                                            "null"
+                                        ],
+                                        "minimum": -50,
+                                        "maximum": 99.9
+                                    }
+                                },
+                                "required": [
+                                    "nombre",
+                                    "tipo",
+                                    "capacidad_tn"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/silos/{id}/mediciones": {
+            "put": {
+                "operationId": "silo.mediciones",
+                "tags": [
+                    "Silo"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "humedad_grano_pct": {
+                                        "type": "number",
+                                        "minimum": 0,
+                                        "maximum": 99.99
+                                    },
+                                    "temperatura_nucleo_c": {
+                                        "type": "number",
+                                        "minimum": -50,
+                                        "maximum": 99.9
+                                    }
+                                },
+                                "required": [
+                                    "humedad_grano_pct",
+                                    "temperatura_nucleo_c"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Silo"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/silos/{id}/stock": {
+            "get": {
+                "operationId": "silo.stock",
+                "tags": [
+                    "Silo"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {}
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "Silo": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "cuenta_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "usuario_id": {
+                        "type": "integer"
+                    },
+                    "establecimiento_id": {
+                        "type": "integer"
+                    },
+                    "nombre": {
+                        "type": "string"
+                    },
+                    "tipo": {
+                        "type": "string"
+                    },
+                    "capacidad_tn": {
+                        "type": "number"
+                    },
+                    "tipo_cultivo_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "humedad_grano_pct": {
+                        "type": [
+                            "number",
+                            "null"
+                        ]
+                    },
+                    "temperatura_nucleo_c": {
+                        "type": [
+                            "number",
+                            "null"
+                        ]
+                    },
+                    "temperatura_limite_c": {
+                        "type": "number"
+                    },
+                    "almacenado_desde": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date"
+                    },
+                    "creado_en": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "actualizado_en": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "id",
+                    "cuenta_id",
+                    "usuario_id",
+                    "establecimiento_id",
+                    "nombre",
+                    "tipo",
+                    "capacidad_tn",
+                    "tipo_cultivo_id",
+                    "humedad_grano_pct",
+                    "temperatura_nucleo_c",
+                    "temperatura_limite_c",
+                    "almacenado_desde",
+                    "creado_en",
+                    "actualizado_en"
+                ],
+                "title": "Silo"
+            }
+        },
+        "responses": {
+            "ValidationException": {
+                "description": "Validation error",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "description": "Errors overview."
+                                },
+                                "errors": {
+                                    "type": "object",
+                                    "description": "A detailed description of each field that failed validation.",
+                                    "additionalProperties": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            },
+                            "required": [
+                                "message",
+                                "errors"
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

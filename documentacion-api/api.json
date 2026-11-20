@@ -42,6 +42,34 @@
                                 }
                             }
                         }
+                    },
+                    "403": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "codigo": {
+                                            "type": "string",
+                                            "const": "sin_permiso"
+                                        },
+                                        "mensaje": {
+                                            "type": "string",
+                                            "const": "Esta operaci\u00f3n no est\u00e1 habilitada"
+                                        },
+                                        "detalles": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "codigo",
+                                        "mensaje",
+                                        "detalles"
+                                    ]
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -49,7 +77,7 @@
         "/auth/registro": {
             "post": {
                 "operationId": "proxy.publico_0",
-                "summary": "`POST /v1/auth/registro` y `POST /v1/auth/login`: las \u00fanicas rutas sin token",
+                "summary": "Rutas sin token: `POST /v1/auth/{registro,login,contratacion}` (y la bandeja simulada de la demo)",
                 "tags": [
                     "Proxy"
                 ],
@@ -120,10 +148,168 @@
                 }
             }
         },
-        "/auth/login": {
+        "/auth/contratacion": {
             "post": {
                 "operationId": "proxy.publico_1",
-                "summary": "`POST /v1/auth/registro` y `POST /v1/auth/login`: las \u00fanicas rutas sin token",
+                "summary": "Rutas sin token: `POST /v1/auth/{registro,login,contratacion}` (y la bandeja simulada de la demo)",
+                "tags": [
+                    "Proxy"
+                ],
+                "responses": {
+                    "503": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "anyOf": [
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "codigo": {
+                                                    "type": "string",
+                                                    "const": "servicio_no_disponible"
+                                                },
+                                                "mensaje": {
+                                                    "type": "string",
+                                                    "const": "El servicio auth no responde"
+                                                },
+                                                "detalles": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "codigo",
+                                                "mensaje",
+                                                "detalles"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "codigo": {
+                                                    "type": "string",
+                                                    "const": "servicio_no_disponible"
+                                                },
+                                                "mensaje": {
+                                                    "type": "string",
+                                                    "const": "El servicio auth no est\u00e1 disponible"
+                                                },
+                                                "detalles": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "codigo",
+                                                "mensaje",
+                                                "detalles"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/correo-simulado/{token}": {
+            "get": {
+                "operationId": "proxy.correoSimulado",
+                "summary": "`GET /v1/auth/correo-simulado/{token}`: bandeja simulada de la demo (Auth decide si est\u00e1 habilitada)",
+                "tags": [
+                    "Proxy"
+                ],
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "503": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "anyOf": [
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "codigo": {
+                                                    "type": "string",
+                                                    "const": "servicio_no_disponible"
+                                                },
+                                                "mensaje": {
+                                                    "type": "string",
+                                                    "const": "El servicio auth no responde"
+                                                },
+                                                "detalles": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "codigo",
+                                                "mensaje",
+                                                "detalles"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "codigo": {
+                                                    "type": "string",
+                                                    "const": "servicio_no_disponible"
+                                                },
+                                                "mensaje": {
+                                                    "type": "string",
+                                                    "const": "El servicio auth no est\u00e1 disponible"
+                                                },
+                                                "detalles": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "codigo",
+                                                "mensaje",
+                                                "detalles"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/login": {
+            "post": {
+                "operationId": "proxy.publico_3",
+                "summary": "Rutas sin token: `POST /v1/auth/{registro,login,contratacion}` (y la bandeja simulada de la demo)",
                 "tags": [
                     "Proxy"
                 ],
@@ -227,23 +413,48 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "codigo": {
-                                            "type": "string",
-                                            "const": "servicio_no_disponible"
+                                    "anyOf": [
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "codigo": {
+                                                    "type": "string",
+                                                    "const": "servicio_no_disponible"
+                                                },
+                                                "mensaje": {
+                                                    "type": "string"
+                                                },
+                                                "detalles": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "codigo",
+                                                "mensaje",
+                                                "detalles"
+                                            ]
                                         },
-                                        "mensaje": {
-                                            "type": "string"
-                                        },
-                                        "detalles": {
-                                            "type": "string"
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "codigo": {
+                                                    "type": "string",
+                                                    "const": "servicio_no_disponible"
+                                                },
+                                                "mensaje": {
+                                                    "type": "string",
+                                                    "const": "No se pudo resolver el contexto del usuario"
+                                                },
+                                                "detalles": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "codigo",
+                                                "mensaje",
+                                                "detalles"
+                                            ]
                                         }
-                                    },
-                                    "required": [
-                                        "codigo",
-                                        "mensaje",
-                                        "detalles"
                                     ]
                                 }
                             }
@@ -280,24 +491,49 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "codigo": {
-                                            "type": "string",
-                                            "const": "sin_permiso"
+                                    "anyOf": [
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "codigo": {
+                                                    "type": "string",
+                                                    "const": "sin_cuenta"
+                                                },
+                                                "mensaje": {
+                                                    "type": "string",
+                                                    "const": "El usuario no pertenece a ninguna cuenta"
+                                                },
+                                                "detalles": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "codigo",
+                                                "mensaje",
+                                                "detalles"
+                                            ]
                                         },
-                                        "mensaje": {
-                                            "type": "string",
-                                            "const": "Un token de sensor solo puede enviar lecturas"
-                                        },
-                                        "detalles": {
-                                            "type": "string"
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "codigo": {
+                                                    "type": "string",
+                                                    "const": "sin_permiso"
+                                                },
+                                                "mensaje": {
+                                                    "type": "string",
+                                                    "const": "Un token de sensor solo puede enviar lecturas"
+                                                },
+                                                "detalles": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "codigo",
+                                                "mensaje",
+                                                "detalles"
+                                            ]
                                         }
-                                    },
-                                    "required": [
-                                        "codigo",
-                                        "mensaje",
-                                        "detalles"
                                     ]
                                 }
                             }
@@ -352,7 +588,7 @@
                             }
                         }
                     },
-                    "403": {
+                    "503": {
                         "description": "",
                         "content": {
                             "application/json": {
@@ -361,11 +597,11 @@
                                     "properties": {
                                         "codigo": {
                                             "type": "string",
-                                            "const": "sin_permiso"
+                                            "const": "servicio_no_disponible"
                                         },
                                         "mensaje": {
                                             "type": "string",
-                                            "const": "El resumen es solo para personas"
+                                            "const": "No se pudo resolver el contexto del usuario"
                                         },
                                         "detalles": {
                                             "type": "string"
@@ -375,6 +611,59 @@
                                         "codigo",
                                         "mensaje",
                                         "detalles"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "anyOf": [
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "codigo": {
+                                                    "type": "string",
+                                                    "const": "sin_cuenta"
+                                                },
+                                                "mensaje": {
+                                                    "type": "string",
+                                                    "const": "El usuario no pertenece a ninguna cuenta"
+                                                },
+                                                "detalles": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "codigo",
+                                                "mensaje",
+                                                "detalles"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "codigo": {
+                                                    "type": "string",
+                                                    "const": "sin_permiso"
+                                                },
+                                                "mensaje": {
+                                                    "type": "string",
+                                                    "const": "El resumen es solo para personas"
+                                                },
+                                                "detalles": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "codigo",
+                                                "mensaje",
+                                                "detalles"
+                                            ]
+                                        }
                                     ]
                                 }
                             }

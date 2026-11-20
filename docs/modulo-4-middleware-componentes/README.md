@@ -32,7 +32,8 @@ Entre ellas se encuentran:
 - CORS;
 - rate limiting;
 - enrutamiento;
-- propagación de identidad;
+- resolución del contexto del usuario;
+- propagación de identidad y contexto;
 - identificación de solicitudes;
 - tratamiento de fallos mediante circuit breaker.
 
@@ -48,19 +49,27 @@ Por ejemplo, las operaciones asociadas a campo son dirigidas al servicio `campo`
 
 El frontend utiliza así una única URL base y no necesita almacenar las direcciones individuales de los microservicios.
 
+El Gateway no reenvía públicamente las rutas `/interno/*`, reservadas a la comunicación entre servicios: ante un intento responde como recurso inexistente (404).
+
 ## Propagación de identidad
 
-Una vez validada una solicitud, el Gateway transmite la identidad hacia los servicios internos mediante cabeceras controladas por el propio Gateway.
+Una vez validada una solicitud, el Gateway resuelve el contexto del usuario mediante campo y transmite identidad y contexto hacia los servicios internos mediante cabeceras controladas por el propio Gateway.
 
 Entre ellas se utilizan:
 
 - `X-Usuario-Id`
+- `X-Cuenta-Id`
 - `X-Usuario-Rol`
+- `X-Establecimiento-Id`, cuando corresponde (puede no existir para un administrador, que opera sobre su cuenta)
 - `X-Autenticable-Tipo`
 - `X-Autenticable-Id`
 - `X-Request-Id`
 
 Las cabeceras de identidad recibidas originalmente desde el cliente no se consideran confiables. El Gateway construye la información de identidad a partir del resultado del proceso de autenticación.
+
+El contexto proviene de `GET /interno/usuarios/{id}/contexto` en `campo`, que devuelve `usuario_id`, `cuenta_id`, rol y `establecimiento_id` (este último solo para empleados; `null` para administradores). El Gateway lo consulta en cada solicitud, sin caché, para que una baja o un traslado tengan efecto inmediato.
+
+Estas cabeceras son contexto interno resuelto por el backend: el usuario no puede elegir libremente su cuenta, rol ni establecimiento desde el frontend.
 
 Esto permite centralizar la autenticación externa sin trasladar esa responsabilidad completa a todos los servicios.
 
@@ -124,7 +133,7 @@ En una arquitectura distribuida, la comunicación entre servicios constituye un 
 
 Los contratos deben indicar qué operación está disponible, qué información recibe y qué respuesta produce.
 
-La documentación técnica de Agrónoma contempla contratos OpenAPI para las APIs y contratos de eventos para la comunicación asíncrona.
+La documentación técnica de Agrónoma contempla contratos OpenAPI, generados mediante Scramble, para las APIs y contratos de eventos para la comunicación asíncrona. El Gateway expone además `GET /v1/estado` (restringido a administradores) y la fachada `GET /v1/resumen`. Los archivos OpenAPI son la fuente de verdad de rutas, métodos y parámetros, y permiten distinguir rutas públicas, autenticadas, administrativas e internas entre servicios.
 
 El objetivo es que productores y consumidores compartan una definición explícita de la información intercambiada, evitando depender únicamente del conocimiento interno de la implementación.
 
@@ -154,7 +163,7 @@ Esta solución resulta adecuada porque existe un Gateway central que conoce los 
 
 ## Health checks
 
-Los servicios exponen mecanismos de comprobación de estado que permiten conocer si el componente está funcionando.
+El Gateway y los servicios `campo`, `silos`, `mercado` y `alertas` exponen mecanismos de comprobación de estado, `GET /health/live` y `GET /health/ready`, que permiten conocer si el componente está funcionando. En esos cuatro servicios, `ready` verifica la conexión a la base de datos y responde 503 si no responde; `alertas` informa además la cantidad de trabajos pendientes.
 
 Se diferencia conceptualmente entre:
 
@@ -210,11 +219,12 @@ Una solicitud típica puede describirse de la siguiente manera:
 3. Se genera un identificador para poder seguir la petición.
 4. Se aplican las políticas transversales correspondientes.
 5. Si la operación requiere autenticación, se valida la identidad.
-6. El Gateway determina el servicio responsable.
-7. Se construyen las cabeceras internas necesarias.
-8. La petición se reenvía al servicio.
-9. El servicio ejecuta su lógica de negocio.
-10. La respuesta vuelve al Gateway.
-11. El Gateway devuelve el resultado al frontend.
+6. Para `silos`, `mercado` y `alertas` (no para `auth` ni `campo`), el Gateway resuelve el contexto del usuario (cuenta, rol y establecimiento) mediante campo en cada solicitud. Si campo no responde devuelve 503, si el usuario no tiene cuenta devuelve 403, y nunca se continúa sin contexto.
+7. El Gateway determina el servicio responsable.
+8. Se construyen las cabeceras internas necesarias.
+9. La petición se reenvía al servicio.
+10. El servicio ejecuta su lógica de negocio.
+11. La respuesta vuelve al Gateway.
+12. El Gateway devuelve el resultado al frontend.
 
 Desde el punto de vista del frontend, todo el backend continúa presentándose como una única interfaz aunque internamente participe más de un componente.

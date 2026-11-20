@@ -12,7 +12,8 @@ La estrategia de Agrónoma contempla:
 - integridad de datos y mensajes;
 - disponibilidad controlada;
 - autenticación centralizada;
-- autorización por rol y propietario;
+- autorización por cuenta, rol y establecimiento;
+- aislamiento entre cuentas;
 - protección del acceso interno;
 - prevención de abuso;
 - detección de fallos;
@@ -28,7 +29,7 @@ La confidencialidad busca impedir que la información pueda ser leída por compo
 
 En producción, la comunicación pública se realiza mediante HTTPS.
 
-Las contraseñas no se almacenan en texto plano. El servicio `auth` utiliza mecanismos de hash para conservarlas de forma segura.
+Las contraseñas no se almacenan en texto plano. El servicio `auth` utiliza mecanismos de hash para conservarlas de forma segura, incluida la contraseña temporal generada en la contratación.
 
 Los tokens de acceso tampoco se guardan directamente. El token presentado por el cliente se transforma mediante SHA-256 antes de buscarlo en la base de datos.
 
@@ -91,14 +92,16 @@ El API Gateway descarta las cabeceras internas que pueda enviar el cliente y gen
 Entre las cabeceras internas se encuentran:
 
 - `X-Usuario-Id`;
+- `X-Cuenta-Id`;
 - `X-Usuario-Rol`;
+- `X-Establecimiento-Id`, cuando corresponde;
 - `X-Autenticable-Tipo`;
 - `X-Autenticable-Id`;
 - `X-Request-Id`.
 
 Los servicios internos verifican además un secreto compartido mediante `X-Gateway-Secret`.
 
-De esta forma, un cliente no puede obtener permisos adicionales simplemente enviando cabeceras de identidad propias.
+De esta forma, un cliente no puede obtener permisos adicionales ni elegir su cuenta o establecimiento simplemente enviando cabeceras de identidad propias.
 
 ### Denegación de servicio
 
@@ -120,7 +123,7 @@ Este servicio gestiona:
 - roles;
 - tokens de acceso;
 - validez y vencimiento de tokens;
-- activación o desactivación de cuentas;
+- activación o desactivación de usuarios;
 - identidad de dispositivos cuando corresponde.
 
 El frontend envía el token mediante:
@@ -129,7 +132,28 @@ El frontend envía el token mediante:
 
 El API Gateway valida la identidad antes de reenviar la solicitud hacia los servicios internos.
 
-Las rutas de registro e inicio de sesión son públicas. Las operaciones protegidas requieren un token válido.
+Las rutas de contratación simulada, inicio de sesión y registro de empleados mediante código son públicas. Las operaciones protegidas requieren un token válido.
+
+No existe registro público para administradores. El rol `admin` solo se crea mediante una contratación y no puede obtenerse en el registro público.
+
+## Contratación simulada y primer ingreso
+
+La contratación es simulada (proyecto académico, sin pasarela de pago real). Desde el punto de vista de la seguridad:
+
+- la contraseña temporal del administrador se genera de forma aleatoria y se almacena únicamente mediante hash;
+- el correo con las credenciales iniciales es simulado y no debe presentarse como un servicio de email real;
+- la bandeja demo está desactivada por defecto y se habilita con `DEMO_CORREO_SIMULADO=true` en `auth`; cuando se habilita, utiliza un token aleatorio de lectura que no se conserva en texto plano;
+- si falla la coordinación entre `auth` y `campo`, el rollback/compensación evita administradores o cuentas huérfanas.
+
+El administrador nace con `primer_ingreso_pendiente = true`. Al completar el primer ingreso, la contraseña temporal deja de servir, la nueva contraseña queda almacenada mediante hash y el rol sigue siendo `admin`. Desde "Mi perfil" no se modifican libremente campos estructurales como rol, cuenta, estado de primer ingreso o identificadores.
+
+## Registro de empleados
+
+El registro de empleados es público pero está condicionado por un código generado por el administrador para un establecimiento de su propia cuenta. `campo` valida el código y vincula al empleado con la cuenta y el establecimiento correspondientes.
+
+El cliente no decide `cuenta_id` ni puede asignarse un establecimiento distinto: ambos salen del código. El registro solo admite los roles `productor`, `ingeniero_agronomo`, `asesor_tecnico`, `contratista` y `otro`; `admin` es rechazado.
+
+El usuario se inserta en una transacción local que solo se confirma si `campo` confirma empleado y asignación y consume el código. Si `campo` falla hay rollback; si el resultado es incierto se compensa en `campo`, dejando el código nuevamente activo. La baja lógica de un empleado desactiva primero el usuario en `auth` y luego lo da de baja en `campo`; los administradores no se desactivan por esta vía.
 
 ## Autorización
 
@@ -140,10 +164,20 @@ Agrónoma aplica autorización mediante:
 - roles;
 - restricciones de rutas;
 - permisos asociados al tipo de identidad;
-- filtrado de recursos por `usuario_id`;
-- ocultación de recursos pertenecientes a otros usuarios.
+- filtrado de recursos por cuenta y, para empleados, por establecimiento;
+- validación de pertenencia de los recursos;
+- ocultación de recursos pertenecientes a otras cuentas o establecimientos.
 
 Un usuario que intenta acceder a un recurso ajeno recibe una respuesta equivalente a recurso inexistente. Esto evita revelar que el recurso existe y pertenece a otra persona.
+
+### Administrador y empleado
+
+El filtrado exclusivo por `usuario_id` ya no es suficiente, porque una misma cuenta puede tener un administrador y varios empleados.
+
+- El administrador accede a los recursos de su cuenta, sin estar limitado a un único establecimiento, y puede realizar las operaciones administrativas (por ejemplo, crear o editar silos, generar códigos y gestionar empleados), además de consultar los supuestos, el margen y el índice de venta de Mercado y gestionar los objetivos de precio de Alertas.
+- El empleado solo opera sobre los recursos permitidos de su establecimiento y no puede realizar operaciones reservadas al administrador.
+
+Los servicios no confían en un `cuenta_id` enviado por el cliente. Por ejemplo, antes de crear o editar un silo, `silos` puede validar con `campo` que el establecimiento pertenece a la cuenta correspondiente.
 
 Los tokens utilizados por sensores se limitan a las operaciones necesarias para enviar lecturas y no otorgan acceso general al resto del sistema.
 
@@ -160,7 +194,7 @@ Si el secreto no está presente o no coincide con el configurado, el servicio de
 
 El secreto utilizado en producción debe almacenarse mediante variables de entorno y no debe publicarse en el repositorio ni en la documentación.
 
-Las rutas internas tampoco son reenviadas públicamente por el Gateway.
+Las rutas `/interno/*` están destinadas a la coordinación entre servicios (por ejemplo, obtener el contexto de un usuario o comprobar la pertenencia de un recurso). No forman parte de la API pública para el frontend y el Gateway impide su exposición pública.
 
 ## Seguridad del webhook
 
@@ -182,7 +216,7 @@ Los errores utilizan una estructura común con campos como:
 
 La estandarización permite que el frontend interprete de forma uniforme errores de autenticación, autorización, validación, inexistencia de recursos y fallos de servicios.
 
-En producción, las respuestas no deben revelar trazas internas, contraseñas, secretos, consultas SQL ni detalles sensibles de configuración.
+En producción, las respuestas no deben revelar trazas internas, contraseñas, secretos, consultas SQL ni detalles sensibles de configuración. Para ello se utiliza `APP_DEBUG=false`.
 
 ## Idempotencia
 
@@ -199,7 +233,7 @@ La idempotencia evita duplicar movimientos, lecturas, alertas y otros efectos cu
 
 ## Health checks y detección de fallos
 
-Los servicios exponen rutas de salud que permiten comprobar su estado.
+El Gateway y los servicios `campo`, `silos`, `mercado` y `alertas` exponen rutas de salud (`/health/live` y `/health/ready`) que permiten comprobar su estado.
 
 Se diferencian dos conceptos:
 
@@ -279,6 +313,14 @@ El Gateway devuelve un error controlado con estado `503` cuando el servicio nece
 ### Fallo de silos durante un cálculo comercial
 
 Si `mercado` no puede obtener la información necesaria desde `silos`, el índice que depende de esa información no debe calcularse utilizando datos inventados.
+
+### Fallo en la coordinación Auth–Campo durante la contratación
+
+Si falla la creación de la cuenta en `campo` o el vínculo posterior con el administrador, los mecanismos de rollback/compensación evitan dejar administradores o cuentas huérfanas.
+
+### Fallo en el registro de un empleado
+
+Si `campo` no confirma el registro, `auth` revierte la transacción local; ante un resultado incierto, se compensa en `campo` y el código vuelve a quedar activo.
 
 ### Fallo del procesamiento de alertas
 

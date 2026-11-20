@@ -22,8 +22,8 @@ Los principales componentes son:
 | ---------- | ---------------------------------------------------------------- |
 | Frontend   | Interfaz utilizada por el productor                              |
 | api        | API Gateway y punto de entrada al backend                        |
-| auth       | Identidad, usuarios y autenticación                              |
-| campo      | Establecimientos, lotes, dispositivos, telemetría y clima        |
+| auth       | Identidad, usuarios, contratación y autenticación                |
+| campo      | Cuentas, planes, establecimientos, lotes, dispositivos, telemetría, clima, empleados y contexto |
 | silos      | Almacenamiento y movimientos de granos                           |
 | mercado    | Cotizaciones, divisas, márgenes e índice de oportunidad de venta |
 | alertas    | Procesamiento y entrega de alertas                               |
@@ -40,17 +40,17 @@ Cada servicio es responsable de su propio dominio.
 
 Centraliza la identidad de usuarios y dispositivos.
 
-Gestiona usuarios, roles y tokens de acceso.
+Gestiona usuarios, roles y tokens de acceso, además de la contratación simulada, el primer ingreso y el alta lógica de empleados.
 
 ### Campo
 
 Representa la información productiva y geográfica.
 
-Gestiona establecimientos rurales, lotes, cultivos, dispositivos, lecturas de sensores, registros de lluvia e información meteorológica.
+Gestiona cuentas y planes, establecimientos rurales, lotes, cultivos, dispositivos, lecturas de sensores, registros de lluvia e información meteorológica, además de los códigos de registro, los empleados y la resolución del contexto de cada usuario.
 
 ### Silos
 
-Gestiona almacenamiento de granos, estado de los silos y movimientos de entrada y salida.
+Gestiona almacenamiento de granos, estado de los silos y movimientos de entrada y salida, con datos aislados por cuenta y establecimiento.
 
 ### Mercado
 
@@ -84,7 +84,9 @@ Una regla central de la arquitectura establece que un servicio no realiza operac
 
 Las relaciones que atraviesan servicios se representan mediante referencias lógicas.
 
-Por ejemplo, un servicio puede conservar el identificador de un usuario perteneciente a auth, pero no utiliza una clave foránea que atraviese las bases de ambos servicios.
+Por ejemplo, auth conserva el identificador lógico de la cuenta creada en campo, y silos referencia la cuenta y el establecimiento a los que pertenece cada recurso, pero ninguno utiliza una clave foránea que atraviese las bases de ambos servicios.
+
+Cuando un servicio necesita información de otro, la obtiene mediante endpoints internos protegidos por `X-Gateway-Secret` y no accediendo a su base de datos.
 
 Esta decisión mantiene la autonomía de cada dominio y reduce el acoplamiento de datos.
 
@@ -94,12 +96,23 @@ Los servicios se coordinan mediante mensajes y solicitudes de red.
 
 Agrónoma utiliza diferentes mecanismos según el tipo de interacción:
 
-- REST para operaciones que requieren comunicación síncrona.
+- REST para operaciones que requieren comunicación síncrona, incluyendo las APIs internas protegidas entre servicios.
 - Eventos para comunicación desacoplada.
 - SSE para entregar alertas al frontend.
 - Webhooks para recibir determinados eventos externos.
 
 De esta forma no existe una única forma de comunicación para todas las situaciones. Cada mecanismo se utiliza según las necesidades de la operación.
+
+## Coordinación entre nodos: contratación de una cuenta
+
+La contratación simulada requiere coordinar dos nodos con bases independientes.
+
+1. auth valida la contratación y crea el usuario administrador.
+2. auth solicita a campo la creación de la cuenta correspondiente al plan.
+3. campo crea la cuenta y devuelve su identificador.
+4. auth vincula lógicamente al administrador con esa cuenta.
+
+Como no existe una transacción que abarque ambas bases, la coherencia se mantiene mediante rollback/compensación: si falla alguno de los pasos, se evita dejar administradores o cuentas huérfanas.
 
 ## Transparencia de acceso
 
@@ -140,6 +153,8 @@ El Gateway utiliza mecanismos de circuit breaker para evitar realizar continuame
 Cuando existe información externa que puede quedar desactualizada, el sistema puede utilizar el último dato almacenado e indicar que ese dato no está actualizado.
 
 Por lo tanto, los fallos se gestionan intentando degradar el servicio de manera controlada en lugar de asumir disponibilidad permanente.
+
+En operaciones que involucran varios servicios, como la contratación, la falla de uno de los pasos se resuelve mediante mecanismos de compensación.
 
 ## Orden de eventos y ausencia de reloj global
 

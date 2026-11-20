@@ -40,9 +40,23 @@ API Gateway
     +----> alertas
 ```
 
-Los servicios también pueden realizar comunicaciones síncronas internas cuando una operación realmente necesita información perteneciente a otro dominio.
+Los servicios también pueden realizar comunicaciones síncronas internas cuando una operación realmente necesita información perteneciente a otro dominio. Por ejemplo:
+
+- el Gateway consulta a campo el contexto del usuario (`usuario_id`, `cuenta_id`, rol y `establecimiento_id`);
+- auth solicita a campo la creación de la cuenta durante la contratación y la validación de códigos de registro de empleados;
+- silos puede validar con campo que un establecimiento pertenece a la cuenta correspondiente.
+
+Estas comunicaciones utilizan rutas internas (`/interno/*`) protegidas mediante `X-Gateway-Secret`, que no forman parte de la API pública ni son expuestas por el Gateway.
 
 El objetivo es evitar cadenas síncronas innecesariamente largas, ya que el tiempo de respuesta y los posibles fallos pueden propagarse entre los servicios involucrados.
+
+## Coordinación Auth–Campo en la contratación
+
+La contratación simulada es una operación síncrona que atraviesa dos servicios con bases independientes: auth crea el usuario administrador, solicita a campo la creación de la cuenta, recibe su identificador y vincula lógicamente ambos registros.
+
+Una falla intermedia podría dejar un administrador sin cuenta o una cuenta sin administrador. Para evitarlo existen mecanismos de rollback/compensación (`campo` expone una compensación idempotente que solo borra cuentas sin estancias).
+
+El registro de empleados sigue un esquema análogo: `auth` confirma su transacción local solo si `campo` confirmó empleado y asignación, y compensa en `campo` si el resultado es incierto.
 
 ## Comunicación asíncrona
 
@@ -81,6 +95,8 @@ Por ejemplo, la recepción de una lectura de sensor puede originar un evento que
 El productor del evento informa el hecho ocurrido, mientras que el consumidor decide qué acciones realizar a partir de ese hecho.
 
 Esta separación reduce el acoplamiento entre los servicios.
+
+Los eventos derivados de lecturas incorporan `cuenta_id` y `establecimiento_id` obtenidos desde la jerarquía de campo, no enviados por el sensor.
 
 ## Semántica de entrega
 

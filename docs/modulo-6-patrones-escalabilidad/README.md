@@ -27,7 +27,8 @@ El Gateway centraliza responsabilidades transversales como:
 - CORS;
 - rate limiting;
 - enrutamiento;
-- propagación de identidad;
+- resolución del contexto del usuario (cuenta, rol y establecimiento);
+- propagación de identidad y contexto;
 - identificación de solicitudes;
 - control de fallos mediante circuit breaker.
 
@@ -43,7 +44,7 @@ Frontend → API Gateway → Servicio
 
 El Proxy permite interponer controles antes de alcanzar el destino final.
 
-Por ejemplo, antes de reenviar una operación protegida, el Gateway valida el token y construye las cabeceras internas de identidad.
+Por ejemplo, antes de reenviar una operación protegida, el Gateway valida el token, resuelve el contexto del usuario y construye las cabeceras internas de identidad y contexto. Además, impide la exposición pública de las rutas `/interno/*`.
 
 Esta estrategia mantiene los servicios internos fuera del acceso directo utilizado normalmente por el frontend.
 
