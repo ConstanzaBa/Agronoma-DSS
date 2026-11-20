@@ -7,12 +7,14 @@ El sistema integra información productiva, telemetría de campo, condiciones me
 🌐 **Aplicación:** https://agronoma.site  
 🔗 **API Gateway:** https://api.agronoma.site/v1  
 📚 **Documentación académica:** [`/docs`](./docs/)  
-📖 **Documentación de APIs:** https://agronoma.site/docs#tokens
+📖 **Documentación de APIs:** [`/documentacion-api`](./documentacion-api/)
 
 ## Funcionalidades principales
 
 Agrónoma permite:
 
+- contratar un plan de forma simulada y crear la cuenta del productor;
+- incorporar empleados mediante códigos de registro asociados a un establecimiento;
 - gestionar establecimientos rurales y lotes;
 - administrar dispositivos y lecturas de sensores;
 - registrar precipitaciones y consultar información meteorológica;
@@ -46,19 +48,34 @@ Cada servicio posee una responsabilidad específica y mantiene su propia persist
 
 Los servicios no realizan `JOIN` sobre tablas pertenecientes a otros dominios ni utilizan las credenciales de las bases de datos de otros servicios.
 
-Las relaciones entre dominios se mantienen mediante referencias lógicas.
+Las relaciones entre dominios se mantienen mediante referencias lógicas (identificadores como `usuario_id`, `cuenta_id` o `establecimiento_id`). No existen claves foráneas entre bases de microservicios diferentes: cuando un servicio necesita información de otro, la solicita mediante endpoints internos protegidos.
+
+## Modelo de cuenta
+
+La unidad principal de aislamiento funcional es la **cuenta**.
+
+Cada contratación crea un único usuario administrador (rol `admin`), una única cuenta asociada a ese administrador y un plan asociado a la cuenta. El administrador y la persona que contrata son la misma figura; no existe un "administrador principal" distinto.
+
+Los planes definidos por el sistema son `core`, `pro` y `enterprise`, y sus límites se aplican sobre los recursos de la cuenta (estancias, lotes, sensores y empleados). Según el catálogo `planes.php` (valores configurables sin tocar código; el propio archivo los marca como provisorios hasta definir la configuración final): `core` admite 1 estancia, 5 lotes, 10 sensores y 2 empleados; `pro`, 5, 50, 100 y 10; `enterprise` no tiene límites. El administrador consulta plan, límites y uso en `GET /v1/campo/cuenta` y puede cambiar de plan de forma simulada; un plan menor se rechaza si el uso actual no cabe en él.
+
+El modelo resultante es:
+
+cuenta → administrador / empleados → establecimientos y recursos dependientes
+
+- El **administrador** pertenece a una cuenta, administra sus recursos y no está limitado a un único establecimiento.
+- El **empleado** pertenece a la cuenta del administrador que lo incorpora, queda asociado a un único establecimiento, conserva su rol funcional y solo opera sobre los recursos permitidos de ese establecimiento.
 
 ## Servicios
 
-| Servicio  | Responsabilidad                                                                                                  |
-| --------- | ---------------------------------------------------------------------------------------------------------------- |
-| `api`     | API Gateway, autenticación de solicitudes, CORS, rate limiting, routing, circuit breaker y fachada `/v1/resumen` |
-| `auth`    | Usuarios, roles, login, registro y tokens de acceso                                                              |
-| `campo`   | Establecimientos, lotes, dispositivos, lecturas, precipitaciones y clima                                         |
-| `silos`   | Silos, movimientos y control concurrente del stock                                                               |
-| `mercado` | Cotizaciones, divisas, insumos, margen e índice de oportunidad de venta                                          |
-| `alertas` | Procesamiento de eventos, reglas, alertas, objetivos de precio y notificaciones                                  |
-| `front`   | Aplicación React utilizada por el usuario                                                                        |
+| Servicio  | Responsabilidad                                                                                                                                      |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `api`     | API Gateway, autenticación de solicitudes, resolución del contexto de usuario, CORS, rate limiting, routing, circuit breaker y fachada `/v1/resumen` |
+| `auth`    | Usuarios, roles, login, contratación simulada, primer ingreso, perfil, registro de empleados y tokens de acceso                                      |
+| `campo`   | Cuentas, planes, establecimientos, lotes, dispositivos, lecturas, clima, códigos de registro, empleados y contexto de usuario                        |
+| `silos`   | Silos, stock, mediciones y movimientos, aislados por cuenta y establecimiento, con control concurrente del stock                                     |
+| `mercado` | Cotizaciones, divisas, insumos, supuestos, margen e índice de oportunidad de venta                                                                   |
+| `alertas` | Procesamiento de eventos, reglas, alertas, objetivos de precio y notificaciones                                                                      |
+| `front`   | Aplicación React utilizada por el usuario                                                                                                            |
 
 ## Tecnologías principales
 
@@ -109,6 +126,8 @@ Por ejemplo:
 - `/v1/mercado/cotizaciones/ultima`
 - `/v1/alertas/alertas/feed`
 
+Las rutas `/interno/*` son APIs de coordinación entre servicios, protegidas mediante `X-Gateway-Secret`. No forman parte de la API pública y el Gateway impide su exposición.
+
 ### Eventos
 
 Los servicios pueden publicar eventos que posteriormente son procesados por `alertas`.
@@ -133,9 +152,37 @@ Las operaciones protegidas utilizan un token Bearer:
 
 El API Gateway valida las solicitudes y transmite hacia los servicios únicamente la identidad obtenida durante la autenticación.
 
-Las rutas de registro e inicio de sesión son públicas.
+Las rutas públicas (sin token) son `POST /v1/auth/contratacion`, `POST /v1/auth/login`, `POST /v1/auth/registro` (exclusivo para empleados) y la bandeja simulada de la demo (`GET /v1/auth/correo-simulado/{token}`, cuya habilitación decide `auth`). **No existe registro público para administradores**: el rol `admin` solo se obtiene a través de una contratación y nunca mediante el registro público.
 
-Los servicios internos no confían directamente en cabeceras de identidad enviadas por el cliente.
+Los servicios internos no confían directamente en cabeceras de identidad enviadas por el cliente. Para `silos`, `mercado` y `alertas`, el Gateway resuelve el contexto consultando a `campo` en cada solicitud, sin caché, (`usuario_id`, `cuenta_id`, rol y, cuando corresponde, `establecimiento_id`) y lo propaga mediante cabeceras internas como `X-Usuario-Id`, `X-Cuenta-Id`, `X-Usuario-Rol` y `X-Establecimiento-Id`. Estas cabeceras son generadas por el backend y no pueden ser elegidas por el usuario desde el frontend.
+
+### Contratación simulada y primer ingreso
+
+La contratación es simulada porque Agrónoma es un proyecto académico: no existe integración con una pasarela de pago real.
+
+1. La persona contrata un plan y `auth` valida la contratación.
+2. `auth` crea un usuario `admin` con una contraseña temporal aleatoria, almacenada únicamente mediante hash.
+3. `auth` solicita a `campo` la creación de la cuenta y recibe su identificador.
+4. `auth` vincula lógicamente al administrador con esa cuenta.
+5. Se genera un correo simulado con las credenciales iniciales.
+
+Si falla la coordinación entre `auth` y `campo`, existen mecanismos de rollback/compensación para no dejar administradores o cuentas huérfanas.
+
+El administrador nace con `primer_ingreso_pendiente = true` y el login informa ese estado. Al completar el primer ingreso (datos requeridos y nueva contraseña) la contraseña temporal deja de servir. Luego puede consultar y modificar los datos permitidos desde "Mi perfil"; rol, cuenta y estado de primer ingreso no se modifican desde el perfil.
+
+El correo simulado no representa un servicio de email real. La bandeja demo está desactivada por defecto y se habilita en `auth` con la variable `DEMO_CORREO_SIMULADO=true`; cuando está habilitada utiliza un token aleatorio de lectura que no se conserva en texto plano.
+
+### Registro de empleados
+
+1. El administrador genera desde `campo` un código de registro asociado a un establecimiento de su propia cuenta.
+2. El empleado se registra utilizando ese código y `auth` crea el usuario con uno de los roles de empleado permitidos.
+3. `campo` valida el código y vincula al empleado con la cuenta y el establecimiento correspondientes.
+
+El cliente no decide `cuenta_id` ni puede asignarse otro establecimiento: cuenta y establecimiento salen del código. Los roles de empleado permitidos en el registro son `productor`, `ingeniero_agronomo`, `asesor_tecnico`, `contratista` y `otro`; `admin` es rechazado.
+
+Si `campo` falla durante el registro se hace rollback; si el resultado es incierto, se compensa en `campo` (el código vuelve a quedar activo). Los códigos pueden estar `activo`, `usado` o `revocado`.
+
+El administrador puede consultar los empleados de su cuenta y darlos de baja de forma lógica: primero se desactiva el usuario en `auth` y luego se da de baja en `campo`, lo que libera el cupo del plan.
 
 ## Seguridad
 
@@ -144,9 +191,10 @@ Agrónoma aplica diferentes mecanismos de seguridad:
 - HTTPS en producción;
 - contraseñas almacenadas mediante hash;
 - tokens almacenados mediante hash;
-- autorización mediante roles;
-- filtrado de recursos por usuario;
-- secreto interno entre Gateway y servicios;
+- autorización según cuenta, rol y establecimiento;
+- aislamiento de recursos entre cuentas y validación de pertenencia;
+- secreto interno (`X-Gateway-Secret`) entre Gateway y servicios;
+- separación entre rutas públicas, autenticadas, administrativas e internas (`/interno/*`);
 - rate limiting;
 - CORS;
 - firma HMAC para el webhook;
@@ -155,7 +203,7 @@ Agrónoma aplica diferentes mecanismos de seguridad:
 - idempotencia;
 - validación de entradas.
 
-Las credenciales y secretos de producción deben mantenerse exclusivamente en variables de entorno y no deben almacenarse en el repositorio.
+Las credenciales y secretos de producción deben mantenerse exclusivamente en variables de entorno y no deben almacenarse en el repositorio. En producción se utiliza `APP_DEBUG=false`.
 
 ## Confiabilidad
 
@@ -238,7 +286,7 @@ Los contratos de las APIs se encuentran en:
 
 [`documentacion-api/`](./documentacion-api/)
 
-La documentación contiene los contratos generados para el Gateway y los servicios del backend.
+La documentación contiene los contratos OpenAPI (`api.json`) generados mediante Scramble para el Gateway y los servicios del backend. Estos archivos son la fuente de verdad de rutas, métodos, parámetros, cuerpos de solicitud y códigos de respuesta.
 
 Las APIs también fueron verificadas mediante Postman durante el desarrollo y las pruebas de integración.
 
@@ -332,6 +380,8 @@ Las releases pueden incluir como evidencia el PDF correspondiente a cada entrega
 
 El alcance actual presenta algunas limitaciones asumidas explícitamente:
 
+- la contratación de planes es simulada, sin pasarela de pago real;
+- el correo inicial de contratación es simulado y no constituye un servicio de email real;
 - no existe replicación de las bases de datos;
 - existe una única base MySQL por servicio;
 - el Gateway constituye un punto central de entrada;
@@ -349,4 +399,3 @@ Integrantes:
 
 - Constanza Baigorria
 - Valentina Rosales Mercado
-
