@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\FechasEs;
+use App\Support\ContextoCuenta;
 use Illuminate\Database\Eloquent\Model;
 
 class Lote extends Model
@@ -23,8 +24,8 @@ class Lote extends Model
         return $this->hasMany(Dispositivo::class, 'lote_id');
     }
 
-    public function scopeDelUsuario($q, int $uid)
+    public function scopeDelContexto($q, ContextoCuenta $c)
     {
-        return $q->whereHas('establecimiento', fn($e) => $e->where('usuario_id', $uid));
+        return $q->whereHas('establecimiento', fn($e) => $e->delContexto($c));
     }
 }

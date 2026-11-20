@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Middleware\RequiereAdminCuenta;
 use App\Http\Middleware\RequiereSensor;
 use App\Http\Middleware\RequiereUsuario;
+use App\Http\Middleware\ResolverContexto;
 use App\Http\Middleware\VerificarGatewaySecret;
 use App\Support\Respuesta;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -23,6 +25,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'gateway' => VerificarGatewaySecret::class,
             'usuario' => RequiereUsuario::class,
             'sensor' => RequiereSensor::class,
+            'contexto' => ResolverContexto::class,
+            'admin.cuenta' => RequiereAdminCuenta::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

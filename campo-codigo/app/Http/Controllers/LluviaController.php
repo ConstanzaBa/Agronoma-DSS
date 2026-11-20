@@ -15,7 +15,7 @@ class LluviaController extends Controller
     public function index(Request $request, int $id): JsonResponse
     {
         $request->validate(['desde' => 'nullable|date_format:Y-m-d', 'hasta' => 'nullable|date_format:Y-m-d']);
-        $lote = Lote::delUsuario($request->attributes->get('usuario_id'))->findOrFail($id);
+        $lote = Lote::delContexto($this->contexto($request))->findOrFail($id);
         $consulta = RegistroLluvia::where('lote_id', $lote->id);
 
         if ($desde = $request->query('desde')) {
@@ -32,7 +32,7 @@ class LluviaController extends Controller
     public function store(Request $request, int $id): JsonResponse
     {
         $uid = $request->attributes->get('usuario_id');
-        $lote = Lote::delUsuario($uid)->findOrFail($id);
+        $lote = Lote::delContexto($this->contexto($request))->findOrFail($id);
         $datos = $request->validate([
             'milimetros' => 'required|numeric|min:0|max:1000',
             'fecha_registro' => 'required|date_format:Y-m-d|before_or_equal:today',

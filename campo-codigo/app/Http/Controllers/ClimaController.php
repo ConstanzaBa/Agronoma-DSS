@@ -15,7 +15,7 @@ class ClimaController extends Controller
 {
     public function show(Request $request, int $id, ProveedorClima $proveedor): JsonResponse
     {
-        $est = Establecimiento::delUsuario($request->attributes->get('usuario_id'))->findOrFail($id);
+        $est = Establecimiento::delContexto($this->contexto($request))->findOrFail($id);
         $clave = 'clima:' . $est->id;
 
         if ($enCache = Cache::get($clave)) {

@@ -16,7 +16,12 @@ class DispositivoController extends Controller
 {
     public function store(Request $request, int $id): JsonResponse
     {
-        $lote = Lote::delUsuario($request->attributes->get('usuario_id'))->findOrFail($id);
+        $lote = Lote::delContexto($this->contexto($request))->findOrFail($id);
+
+        if ($excedido = $this->limiteExcedido($request, 'sensores')) {
+            return $excedido;
+        }
+
         $datos = $request->validate([
             'nombre' => 'required|string|max:80',
             'latitud' => 'nullable|numeric|between:-90,90',
@@ -59,9 +64,59 @@ class DispositivoController extends Controller
 
     public function show(Request $request, int $id): JsonResponse
     {
-        $uid = $request->attributes->get('usuario_id');
-        $dispositivo = Dispositivo::whereHas('lote', fn($q) => $q->delUsuario($uid))->findOrFail($id);
+        return response()->json($this->delContexto($request, $id));
+    }
 
-        return response()->json($dispositivo);
+    /** PATCH /dispositivos/{id}: activa o desactiva el sensor. No toca el token (vive solo en Auth). */
+    public function actualizar(Request $request, int $id): JsonResponse
+    {
+        $datos = $request->validate(['activo' => 'required|boolean']);
+        $dispositivo = $this->delContexto($request, $id);
+        $dispositivo->update(['activo' => (bool) $datos['activo']]);
+
+        Log::info('Estado de dispositivo cambiado', ['id' => $dispositivo->id, 'activo' => $dispositivo->activo]);
+
+        return response()->json($dispositivo->fresh());
+    }
+
+    /** POST /dispositivos/{id}/token: pide a Auth un token nuevo. Campo no lo guarda; se devuelve una sola vez. */
+    public function regenerarToken(Request $request, int $id): JsonResponse
+    {
+        $dispositivo = $this->delContexto($request, $id);
+
+        try {
+            $r = Http::withHeaders([
+                'X-Gateway-Secret' => config('agrotech.gateway_secret'),
+                'Accept' => 'application/json',
+            ])->timeout(3)->post(
+                rtrim((string) config('agrotech.auth_url'), '/') . '/api/v1/interno/tokens/dispositivo',
+                ['dispositivo_id' => $dispositivo->id, 'nombre' => $dispositivo->nombre]
+            );
+
+            if (! $r->successful() || ! is_string($r->json('token')) || $r->json('token') === '') {
+                throw new \RuntimeException('auth respondió ' . $r->status());
+            }
+        } catch (\Throwable $ex) {
+            Log::error('No se pudo regenerar el token del dispositivo', ['id' => $dispositivo->id, 'error' => $ex->getMessage()]);
+
+            return Respuesta::error('servicio_no_disponible', 'No se pudo emitir el token del sensor', 503);
+        }
+
+        Log::info('Token de dispositivo regenerado', ['id' => $dispositivo->id]);
+
+        return response()->json([
+            'dispositivo' => $dispositivo,
+            'token' => $r->json('token'),
+            'permisos' => $r->json('permisos'),
+            'aviso' => 'Guardalo ahora: no se vuelve a mostrar. El token anterior deja de servir.',
+        ]);
+    }
+
+    /** Solo dispositivos de lotes visibles en el contexto; ajeno o inexistente → 404. */
+    private function delContexto(Request $request, int $id): Dispositivo
+    {
+        $contexto = $this->contexto($request);
+
+        return Dispositivo::whereHas('lote', fn($q) => $q->delContexto($contexto))->findOrFail($id);
     }
 }

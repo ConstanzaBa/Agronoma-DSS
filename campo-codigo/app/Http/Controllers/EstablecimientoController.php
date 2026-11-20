@@ -23,12 +23,12 @@ class EstablecimientoController extends Controller
 
     private function buscar(Request $request, int $id): Establecimiento
     {
-        return Establecimiento::delUsuario($request->attributes->get('usuario_id'))->findOrFail($id);
+        return Establecimiento::delContexto($this->contexto($request))->findOrFail($id);
     }
 
     public function index(Request $request): JsonResponse
     {
-        $pagina = Establecimiento::delUsuario($request->attributes->get('usuario_id'))
+        $pagina = Establecimiento::delContexto($this->contexto($request))
             ->orderBy('nombre')
             ->paginate(Respuesta::porPagina($request));
 
@@ -37,12 +37,16 @@ class EstablecimientoController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        if ($excedido = $this->limiteExcedido($request, 'estancias')) {
+            return $excedido;
+        }
+
         $datos = $request->validate($this->reglas());
         $datos['zoom'] = $datos['zoom'] ?? 13;
-        $uid = $request->attributes->get('usuario_id');
+        $contexto = $this->contexto($request);
 
-        $est = Establecimiento::create($datos + ['usuario_id' => $uid]);
-        Log::info('Establecimiento creado', ['id' => $est->id, 'usuario_id' => $uid]);
+        $est = Establecimiento::create($datos + ['cuenta_id' => $contexto->cuentaId]);
+        Log::info('Establecimiento creado', ['id' => $est->id, 'cuenta_id' => $contexto->cuentaId]);
 
         return response()->json($est, 201);
     }

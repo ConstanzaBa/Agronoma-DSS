@@ -25,6 +25,12 @@ class SimuladorController extends Controller
             return Respuesta::error('no_encontrado', 'Dispositivo inexistente', 404);
         }
 
+        if (! $d->activo) {
+            Log::warning('Simulación rechazada: dispositivo inactivo', ['dispositivo_id' => $d->id]);
+
+            return Respuesta::error('sin_permiso', 'Dispositivo inexistente o inactivo', 403);
+        }
+
         $base = (int) $d->ultima_secuencia;
         $n = (int) ($datos['cantidad'] ?? 3);
         $crear = fn(int $s) => [

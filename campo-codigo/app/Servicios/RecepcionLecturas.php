@@ -19,6 +19,10 @@ class RecepcionLecturas
     /** @return array{0:int,1:array} estado HTTP y cuerpo */
     public function recibir(Dispositivo $d, array $datos): array
     {
+        if (! $d->activo) {
+            return [403, ['codigo' => 'sin_permiso', 'mensaje' => 'Dispositivo inexistente o inactivo']];
+        }
+
         $secuencia = (int) $datos['secuencia'];
         $medido = Carbon::parse($datos['medido_en'])->utc();
 
@@ -66,10 +70,16 @@ class RecepcionLecturas
             Log::info('Lectura vieja guardada sin tocar el caché', ['dispositivo_id' => $d->id, 'secuencia' => $secuencia]);
         }
 
+        // Cuenta y estancia salen de la jerarquía propia de Campo (dispositivo → lote → establecimiento),
+        // nunca del pedido del sensor.
+        $establecimiento = $d->lote->establecimiento;
+
         $this->publicador->publicar('lectura.recibida', Evento::crear('lectura_recibida', [
             'lote_id' => $d->lote_id,
             'dispositivo_id' => $d->id,
-            'usuario_id' => $d->lote->establecimiento?->usuario_id,
+            'cuenta_id' => $establecimiento?->cuenta_id,
+            'establecimiento_id' => $d->lote->establecimiento_id,
+            'usuario_id' => $establecimiento?->cuenta?->administrador_usuario_id,
             'humedad_suelo_pct' => (float) $datos['humedad_suelo_pct'],
             'dias_sin_lluvia' => $this->diasSinLluvia($d->lote_id),
             'medido_en' => $medido->toIso8601String(),

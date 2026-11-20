@@ -42,7 +42,7 @@ class LecturaController extends Controller
     public function index(Request $request, int $id): JsonResponse
     {
         $request->validate(['desde' => 'nullable|date', 'hasta' => 'nullable|date']);
-        $lote = Lote::delUsuario($request->attributes->get('usuario_id'))->findOrFail($id);
+        $lote = Lote::delContexto($this->contexto($request))->findOrFail($id);
         $consulta = Lectura::where('lote_id', $lote->id);
 
         if ($desde = $request->query('desde')) {

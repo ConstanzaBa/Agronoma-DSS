@@ -26,19 +26,24 @@ class LoteController extends Controller
 
     private function buscar(Request $request, int $id): Lote
     {
-        return Lote::delUsuario($request->attributes->get('usuario_id'))->findOrFail($id);
+        return Lote::delContexto($this->contexto($request))->findOrFail($id);
     }
 
     public function index(Request $request, int $id): JsonResponse
     {
-        $est = Establecimiento::delUsuario($request->attributes->get('usuario_id'))->findOrFail($id);
+        $est = Establecimiento::delContexto($this->contexto($request))->findOrFail($id);
 
         return Respuesta::paginado($est->lotes()->orderBy('nombre')->paginate(Respuesta::porPagina($request)));
     }
 
     public function store(Request $request, int $id): JsonResponse
     {
-        $est = Establecimiento::delUsuario($request->attributes->get('usuario_id'))->findOrFail($id);
+        $est = Establecimiento::delContexto($this->contexto($request))->findOrFail($id);
+
+        if ($excedido = $this->limiteExcedido($request, 'lotes')) {
+            return $excedido;
+        }
+
         $lote = $est->lotes()->create($request->validate($this->reglas()));
         Log::info('Lote creado', ['id' => $lote->id, 'establecimiento_id' => $est->id]);
 
@@ -65,5 +70,17 @@ class LoteController extends Controller
         Log::info('Lote dado de baja (con sus sensores y lecturas)', ['id' => $id]);
 
         return response()->json(['mensaje' => 'Lote eliminado']);
+    }
+
+    public function todos(Request $request): JsonResponse
+    {
+        $request->validate(['establecimiento_id' => 'nullable|integer|min:1']);
+        $consulta = Lote::delContexto($this->contexto($request));
+
+        if ($request->filled('establecimiento_id')) {
+            $consulta->where('establecimiento_id', (int) $request->query('establecimiento_id'));
+        }
+
+        return Respuesta::paginado($consulta->orderBy('nombre')->paginate(Respuesta::porPagina($request)));
     }
 }
