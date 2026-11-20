@@ -11,6 +11,7 @@ class Silo extends Model
 
     protected $table = 'silos';
     protected $fillable = [
+        'cuenta_id',
         'usuario_id',
         'establecimiento_id',
         'nombre',
@@ -35,8 +36,24 @@ class Silo extends Model
         return $this->hasMany(Movimiento::class, 'silo_id');
     }
 
-    public function scopeDelUsuario($q, int $uid)
+    /** Aislamiento por cuenta. */
+    public function scopeDeLaCuenta($q, int $cuentaId)
     {
-        return $q->where('usuario_id', $uid);
+        return $q->where('cuenta_id', $cuentaId);
+    }
+
+    /**
+     * Silos visibles para quien hace el pedido (atributos fijados por RequiereUsuario):
+     * admin → toda su cuenta; empleado → solo la estancia que tiene asignada dentro de su cuenta.
+     */
+    public function scopeVisiblesPara($q, \Illuminate\Http\Request $request)
+    {
+        $q->where('cuenta_id', (int) $request->attributes->get('cuenta_id'));
+
+        if (! $request->attributes->get('es_admin')) {
+            $q->where('establecimiento_id', (int) $request->attributes->get('establecimiento_id'));
+        }
+
+        return $q;
     }
 }

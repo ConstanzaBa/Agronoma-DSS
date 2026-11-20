@@ -10,9 +10,9 @@ Route::pattern('id', '[0-9]+');
 Route::middleware('gateway')->group(function () {
     Route::middleware('usuario')->group(function () {
         Route::get('/silos', [SiloController::class, 'index']);
-        Route::post('/silos', [SiloController::class, 'store']);
+        Route::post('/silos', [SiloController::class, 'store'])->middleware('admin');
         Route::get('/silos/{id}', [SiloController::class, 'show']);
-        Route::put('/silos/{id}', [SiloController::class, 'update']);
+        Route::put('/silos/{id}', [SiloController::class, 'update'])->middleware('admin');
         Route::put('/silos/{id}/mediciones', [SiloController::class, 'mediciones']);
         Route::get('/silos/{id}/stock', [SiloController::class, 'stock']);
         Route::get('/silos/{id}/movimientos', [MovimientoController::class, 'index']);

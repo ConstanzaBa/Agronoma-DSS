@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Eventos\Evento;
 use App\Eventos\PublicadorEventos;
+use App\Excepciones\CampoNoDisponible;
 use App\Models\Silo;
 use App\Servicios\StockSilo;
+use App\Servicios\ValidadorEstancia;
 use App\Support\Respuesta;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -24,16 +26,38 @@ class SiloController extends Controller
         ];
     }
 
+    /**
+     * Confirma con Campo que la estancia es de la cuenta del Gateway (nunca la del body).
+     * null = pertenece, se puede continuar; si no, la respuesta de error y no se toca el silo.
+     */
+    private function verificarEstancia(Request $request, int $establecimientoId): ?JsonResponse
+    {
+        $cuenta = (int) $request->attributes->get('cuenta_id');
+
+        try {
+            if (app(ValidadorEstancia::class)->pertenece($establecimientoId, $cuenta)) {
+                return null;
+            }
+        } catch (CampoNoDisponible $e) {
+            return Respuesta::error('servicio_no_disponible', 'No se pudo validar el establecimiento con Campo', 503);
+        }
+
+        Log::warning('Establecimiento que no pertenece a la cuenta', ['establecimiento_id' => $establecimientoId, 'cuenta_id' => $cuenta, 'usuario_id' => $request->attributes->get('usuario_id')]);
+
+        return Respuesta::error('establecimiento_invalido', 'El establecimiento no pertenece a tu cuenta', 422, ['establecimiento_id' => ['El establecimiento no pertenece a tu cuenta']]);
+    }
+
     private function buscar(Request $request, int $id): Silo
     {
-        return Silo::delUsuario($request->attributes->get('usuario_id'))->findOrFail($id);
+        return Silo::visiblesPara($request)->findOrFail($id); // otra cuenta/estancia → 404
     }
 
     public function index(Request $request): JsonResponse
     {
-        $consulta = Silo::delUsuario($request->attributes->get('usuario_id'));
+        $consulta = Silo::visiblesPara($request);
 
-        if ($request->filled('establecimiento_id')) {
+        // El empleado ya está acotado a su estancia; el filtro solo aplica al admin.
+        if ($request->attributes->get('es_admin') && $request->filled('establecimiento_id')) {
             $consulta->where('establecimiento_id', (int) $request->query('establecimiento_id'));
         }
 
@@ -46,8 +70,15 @@ class SiloController extends Controller
         $datos['temperatura_limite_c'] = $datos['temperatura_limite_c'] ?? 25;
         $uid = $request->attributes->get('usuario_id');
 
-        $silo = Silo::create($datos + ['usuario_id' => $uid]);
-        Log::info('Silo creado', ['id' => $silo->id, 'usuario_id' => $uid, 'tipo' => $silo->tipo]);
+        if ($rechazo = $this->verificarEstancia($request, (int) $datos['establecimiento_id'])) {
+            return $rechazo;
+        }
+
+        // La cuenta sale de la identidad del Gateway, nunca del body (solo admin llega aquí).
+        $cuenta = $request->attributes->get('cuenta_id');
+
+        $silo = Silo::create($datos + ['cuenta_id' => $cuenta, 'usuario_id' => $uid]);
+        Log::info('Silo creado', ['id' => $silo->id, 'cuenta_id' => $cuenta, 'usuario_id' => $uid, 'tipo' => $silo->tipo]);
 
         return response()->json($silo, 201);
     }
@@ -64,6 +95,13 @@ class SiloController extends Controller
         $silo = $this->buscar($request, $id);
         $datos = $request->validate($this->reglas());
         $datos['temperatura_limite_c'] = $datos['temperatura_limite_c'] ?? 25;
+
+        // La estancia del silo no se cambia al editar (se ignora cualquier establecimiento_id del body);
+        // se reconfirma con Campo la estancia ya guardada antes de modificar.
+        if ($rechazo = $this->verificarEstancia($request, (int) $silo->establecimiento_id)) {
+            return $rechazo;
+        }
+
         $silo->update($datos);
         Log::info('Silo editado', ['id' => $silo->id]);
 
@@ -83,6 +121,8 @@ class SiloController extends Controller
 
         $publicador->publicar('silo.temperatura', Evento::crear('silo_temperatura', [
             'silo_id' => $silo->id,
+            'cuenta_id' => $silo->cuenta_id,
+            'establecimiento_id' => $silo->establecimiento_id,
             'usuario_id' => $silo->usuario_id,
             'temperatura_nucleo_c' => (float) $silo->temperatura_nucleo_c,
             'temperatura_limite_c' => (float) $silo->temperatura_limite_c,

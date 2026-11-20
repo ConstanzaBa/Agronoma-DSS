@@ -19,7 +19,7 @@ class MovimientoController extends Controller
     public function index(Request $request, int $id): JsonResponse
     {
         $request->validate(['desde' => 'nullable|date_format:Y-m-d', 'hasta' => 'nullable|date_format:Y-m-d']);
-        $silo = Silo::delUsuario($request->attributes->get('usuario_id'))->findOrFail($id);
+        $silo = Silo::visiblesPara($request)->findOrFail($id);
         $consulta = Movimiento::where('silo_id', $silo->id);
 
         if ($desde = $request->query('desde')) {
@@ -48,9 +48,10 @@ class MovimientoController extends Controller
         $toneladas = round((float) $datos['toneladas'], 2);
 
         try {
-            [$estado, $cuerpo] = DB::transaction(function () use ($id, $uid, $datos, $toneladas) {
+            [$estado, $cuerpo] = DB::transaction(function () use ($request, $id, $uid, $datos, $toneladas) {
                 // 1) Bloqueo de la fila del silo: los demás movimientos del mismo silo esperan acá.
-                $silo = Silo::where('id', $id)->where('usuario_id', $uid)->lockForUpdate()->firstOrFail();
+                // El alcance (cuenta y, para empleados, estancia) se aplica en la misma consulta del bloqueo.
+                $silo = Silo::visiblesPara($request)->where('id', $id)->lockForUpdate()->firstOrFail();
 
                 // 2) Idempotencia: la misma clave devuelve el movimiento ya registrado.
                 $previo = Movimiento::where('clave_idempotencia', $datos['clave_idempotencia'])->first();

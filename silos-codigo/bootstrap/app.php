@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\RequiereAdmin;
 use App\Http\Middleware\RequiereUsuario;
 use App\Http\Middleware\VerificarGatewaySecret;
 use App\Support\Respuesta;
@@ -21,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'gateway' => VerificarGatewaySecret::class,
             'usuario' => RequiereUsuario::class,
+            'admin' => RequiereAdmin::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

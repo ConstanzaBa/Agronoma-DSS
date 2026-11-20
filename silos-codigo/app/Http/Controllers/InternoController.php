@@ -16,6 +16,8 @@ class InternoController extends Controller
 
         return response()->json([
             'silo_id' => $silo->id,
+            'cuenta_id' => $silo->cuenta_id,
+            'establecimiento_id' => $silo->establecimiento_id,
             'usuario_id' => $silo->usuario_id,
             'tipo_cultivo_id' => $silo->tipo_cultivo_id,
             'humedad_grano_pct' => $silo->humedad_grano_pct,
