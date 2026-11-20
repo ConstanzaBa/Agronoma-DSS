@@ -39,6 +39,8 @@ class GeneradorAlertas
 
                 $alerta = $this->emitir(
                     (int) $d['usuario_id'],
+                    $this->cuenta($d),
+                    $this->estancia($d),
                     $regla,
                     ['lote_id' => (int) $d['lote_id']],
                     $titulo,
@@ -67,6 +69,8 @@ class GeneradorAlertas
             if ($dias >= $minimo) {
                 $alerta = $this->emitir(
                     (int) $d['usuario_id'],
+                    $this->cuenta($d),
+                    $this->estancia($d),
                     $regla,
                     ['lote_id' => (int) $d['lote_id']],
                     "Sin lluvia hace {$dias} días en el lote #{$d['lote_id']}",
@@ -96,6 +100,8 @@ class GeneradorAlertas
 
                 $alerta = $this->emitir(
                     (int) $d['usuario_id'],
+                    $this->cuenta($d),
+                    $this->estancia($d),
                     $regla,
                     ['silo_id' => (int) $d['silo_id']],
                     $titulo,
@@ -116,6 +122,8 @@ class GeneradorAlertas
             if (in_array($d['veredicto'], $regla->parametros['veredictos'] ?? ['sell'], true)) {
                 $alerta = $this->emitir(
                     (int) $d['usuario_id'],
+                    $this->cuenta($d),
+                    $this->estancia($d),
                     $regla,
                     ['silo_id' => (int) $d['silo_id']],
                     "Buen momento para vender (silo #{$d['silo_id']})",
@@ -173,6 +181,8 @@ class GeneradorAlertas
             $verbo = $objetivo->direccion === 'sube' ? 'superó' : 'cayó por debajo de';
             $alerta = $this->emitir(
                 $objetivo->usuario_id,
+                $objetivo->cuenta_id,
+                null,
                 $regla,
                 ['datos->tipo_cultivo_id' => $cultivoId],
                 "La {$cultivo} {$verbo} {$objetivo->moneda} {$formato($objetivo->umbral)}",
@@ -190,6 +200,17 @@ class GeneradorAlertas
         return $alertas;
     }
 
+    /** Cuenta y estancia vienen en el evento (emitido por un servicio interno), no del cliente. */
+    private function cuenta(array $d): ?int
+    {
+        return isset($d['cuenta_id']) ? (int) $d['cuenta_id'] : null;
+    }
+
+    private function estancia(array $d): ?int
+    {
+        return isset($d['establecimiento_id']) ? (int) $d['establecimiento_id'] : null;
+    }
+
     /** Reglas activas de un tipo, de la más grave a la más leve. */
     private function reglas(string $tipo)
     {
@@ -202,9 +223,14 @@ class GeneradorAlertas
      * Crea la alerta, salvo que ya haya una activa del mismo tipo y entidad (tu paso 4).
      * Si la nueva es más grave, la existente sube de severidad.
      */
-    private function emitir(int $usuarioId, ReglaAlerta $regla, array $clave, string $titulo, string $mensaje, array $datos): ?Alerta
+    private function emitir(int $usuarioId, ?int $cuentaId, ?int $estanciaId, ReglaAlerta $regla, array $clave, string $titulo, string $mensaje, array $datos): ?Alerta
     {
-        $consulta = Alerta::where('usuario_id', $usuarioId)->where('tipo', $regla->tipo)->where('estado', 'active');
+        $consulta = Alerta::where('tipo', $regla->tipo)->where('estado', 'active');
+
+        // Sin cuenta en el evento (emisor aún no adaptado) se conserva el criterio anterior por usuario.
+        $cuentaId !== null
+            ? $consulta->where('cuenta_id', $cuentaId)
+            : $consulta->whereNull('cuenta_id')->where('usuario_id', $usuarioId);
 
         foreach ($clave as $columna => $valor) {
             $consulta->where($columna, $valor);
@@ -232,6 +258,8 @@ class GeneradorAlertas
         }
 
         $alerta = Alerta::create([
+            'cuenta_id' => $cuentaId,
+            'establecimiento_id' => $estanciaId,
             'usuario_id' => $usuarioId,
             'regla_id' => $regla->id,
             'tipo' => $regla->tipo,

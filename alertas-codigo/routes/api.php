@@ -18,12 +18,14 @@ Route::middleware('gateway')->group(function () {
 
         Route::get('/reglas', [ReglaController::class, 'index']);
 
-        Route::get('/objetivos-precio', [ObjetivoController::class, 'index']);
-        Route::post('/objetivos-precio', [ObjetivoController::class, 'store']);
-        Route::put('/objetivos-precio/{id}', [ObjetivoController::class, 'update']);
-        Route::delete('/objetivos-precio/{id}', [ObjetivoController::class, 'destroy']);
-
         Route::middleware('admin')->group(function () {
+            // Objetivos de precio: información comercial de la cuenta, solo admin.
+            Route::get('/objetivos-precio', [ObjetivoController::class, 'index']);
+            Route::post('/objetivos-precio', [ObjetivoController::class, 'store']);
+            Route::put('/objetivos-precio/{id}', [ObjetivoController::class, 'update']);
+            Route::delete('/objetivos-precio/{id}', [ObjetivoController::class, 'destroy']);
+
+            // Reglas globales: el controlador responde 403 reglas_globales (ver ReglaController).
             Route::post('/reglas', [ReglaController::class, 'store']);
             Route::put('/reglas/{id}', [ReglaController::class, 'update']);
         });

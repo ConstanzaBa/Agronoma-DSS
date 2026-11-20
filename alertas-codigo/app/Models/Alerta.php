@@ -9,6 +9,8 @@ class Alerta extends Model
     public $timestamps = false;
     protected $table = 'alertas';
     protected $fillable = [
+        'cuenta_id',
+        'establecimiento_id',
         'usuario_id',
         'regla_id',
         'tipo',
@@ -30,8 +32,23 @@ class Alerta extends Model
         'resuelta_en' => 'datetime',
     ];
 
-    public function scopeDelUsuario($q, int $uid)
+    /**
+     * Alertas visibles para quien hace el pedido (identidad fijada por RequiereUsuario):
+     *  - admin: las de su cuenta; además las previas sin cuenta que generó su propio usuario (compatibilidad).
+     *  - empleado: solo las de su cuenta y su estancia (sin estancia registrada → no se ven).
+     */
+    public function scopeVisiblesPara($q, \Illuminate\Http\Request $request)
     {
-        return $q->where('usuario_id', $uid);
+        $cuenta = (int) $request->attributes->get('cuenta_id');
+
+        if ($request->attributes->get('es_admin')) {
+            $uid = (int) $request->attributes->get('usuario_id');
+
+            return $q->where(fn($w) => $w->where('cuenta_id', $cuenta)
+                ->orWhere(fn($l) => $l->whereNull('cuenta_id')->where('usuario_id', $uid)));
+        }
+
+        return $q->where('cuenta_id', $cuenta)
+            ->where('establecimiento_id', (int) $request->attributes->get('establecimiento_id'));
     }
 }

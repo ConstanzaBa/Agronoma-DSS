@@ -13,7 +13,7 @@ class AlertaController extends Controller
 {
     private function buscar(Request $request, int $id): Alerta
     {
-        return Alerta::delUsuario($request->attributes->get('usuario_id'))->findOrFail($id);
+        return Alerta::visiblesPara($request)->findOrFail($id); // ajena → 404
     }
 
     public function index(Request $request): JsonResponse
@@ -24,7 +24,7 @@ class AlertaController extends Controller
             'desde_id' => 'nullable|integer|min:0',
         ]);
 
-        $consulta = Alerta::delUsuario($request->attributes->get('usuario_id'));
+        $consulta = Alerta::visiblesPara($request);
 
         if ($estado = $request->query('estado')) {
             $consulta->where('estado', $estado);
@@ -80,12 +80,12 @@ class AlertaController extends Controller
         $ultimo = (int) ($request->header('Last-Event-ID') ?: $request->query('desde_id', 0));
 
         if ($ultimo === 0) {
-            $ultimo = (int) Alerta::delUsuario($uid)->max('id');   // sin punto de partida: solo las nuevas desde ahora
+            $ultimo = (int) Alerta::visiblesPara($request)->max('id');   // sin punto de partida: solo las nuevas desde ahora
         }
 
         Log::info('Feed SSE abierto', ['usuario_id' => $uid, 'desde_id' => $ultimo]);
 
-        return response()->stream(function () use ($uid, $ultimo) {
+        return response()->stream(function () use ($request, $ultimo) {
             @set_time_limit(40);
             @ini_set('zlib.output_compression', '0');
             $inicio = time();
@@ -94,7 +94,7 @@ class AlertaController extends Controller
             $this->vaciar();
 
             while (time() - $inicio < 25 && ! connection_aborted()) {
-                $nuevas = Alerta::delUsuario($uid)->where('id', '>', $ultimo)->orderBy('id')->limit(50)->get();
+                $nuevas = Alerta::visiblesPara($request)->where('id', '>', $ultimo)->orderBy('id')->limit(50)->get();
 
                 foreach ($nuevas as $alerta) {
                     echo "id: {$alerta->id}\nevent: alerta\ndata: " . $alerta->toJson() . "\n\n";

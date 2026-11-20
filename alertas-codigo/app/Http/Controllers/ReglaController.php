@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ReglaAlerta;
+use App\Support\Respuesta;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -14,33 +15,22 @@ class ReglaController extends Controller
         return response()->json(['data' => ReglaAlerta::orderBy('tipo')->orderBy('severidad')->get()]);
     }
 
+    // Las reglas son configuración global del sistema (compartida por todas las cuentas):
+    // ninguna cuenta puede modificarlas hasta definirse reglas por cuenta o un administrador global.
     public function store(Request $request): JsonResponse
     {
-        $datos = $request->validate([
-            'tipo' => 'required|in:moisture,silo_temp,no_rain,market,price_target',
-            'severidad' => 'required|in:critical,warning,info',
-            'parametros' => 'required|array',
-            'activa' => 'nullable|boolean',
-        ]);
-
-        $regla = ReglaAlerta::create($datos + ['activa' => true]);
-        Log::info('Regla creada', ['id' => $regla->id, 'usuario_id' => $request->attributes->get('usuario_id')]);
-
-        return response()->json($regla, 201);
+        return $this->globales($request);
     }
 
     public function update(Request $request, int $id): JsonResponse
     {
-        $regla = ReglaAlerta::findOrFail($id);
-        $datos = $request->validate([
-            'severidad' => 'nullable|in:critical,warning,info',
-            'parametros' => 'required|array',
-            'activa' => 'nullable|boolean',
-        ]);
+        return $this->globales($request);
+    }
 
-        $regla->update(array_filter($datos, fn($v) => $v !== null));
-        Log::info('Regla editada', ['id' => $regla->id, 'usuario_id' => $request->attributes->get('usuario_id')]);
+    private function globales(Request $request): JsonResponse
+    {
+        Log::warning('Intento de modificar reglas globales', ['usuario_id' => $request->attributes->get('usuario_id'), 'cuenta_id' => $request->attributes->get('cuenta_id')]);
 
-        return response()->json($regla);
+        return Respuesta::error('reglas_globales', 'Las reglas de alerta son globales y no se editan desde una cuenta', 403);
     }
 }

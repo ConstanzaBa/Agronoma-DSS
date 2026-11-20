@@ -22,12 +22,12 @@ class ObjetivoController extends Controller
 
     private function buscar(Request $request, int $id): ObjetivoPrecio
     {
-        return ObjetivoPrecio::where('usuario_id', $request->attributes->get('usuario_id'))->findOrFail($id);
+        return ObjetivoPrecio::visiblesPara($request)->findOrFail($id);
     }
 
     public function index(Request $request): JsonResponse
     {
-        $consulta = ObjetivoPrecio::where('usuario_id', $request->attributes->get('usuario_id'));
+        $consulta = ObjetivoPrecio::visiblesPara($request);
 
         if ($request->filled('activo')) {
             $consulta->where('activo', $request->boolean('activo'));
@@ -42,7 +42,9 @@ class ObjetivoController extends Controller
         $uid = $request->attributes->get('usuario_id');
 
         // Sin clave de idempotencia en la tabla: el mismo objetivo no se duplica.
-        $existente = ObjetivoPrecio::where('usuario_id', $uid)
+        $cuenta = $request->attributes->get('cuenta_id'); // de la identidad, nunca del body
+
+        $existente = ObjetivoPrecio::where('cuenta_id', $cuenta)
             ->where('tipo_cultivo_id', $datos['tipo_cultivo_id'])
             ->where('moneda', $datos['moneda'])
             ->where('direccion', $datos['direccion'])
@@ -55,8 +57,8 @@ class ObjetivoController extends Controller
             return response()->json($existente, 200);
         }
 
-        $objetivo = ObjetivoPrecio::create($datos + ['usuario_id' => $uid, 'activo' => true]);
-        Log::info('Objetivo de precio creado', ['id' => $objetivo->id, 'usuario_id' => $uid]);
+        $objetivo = ObjetivoPrecio::create($datos + ['cuenta_id' => $cuenta, 'usuario_id' => $uid, 'activo' => true]);
+        Log::info('Objetivo de precio creado', ['id' => $objetivo->id, 'cuenta_id' => $cuenta, 'usuario_id' => $uid]);
 
         return response()->json($objetivo, 201);
     }
