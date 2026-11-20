@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import HashLink from "./HashLink.jsx";
 import { Menu, Moon, Radio, Sun, X } from "lucide-react";
 
 const links = [
@@ -27,13 +28,13 @@ export default function Navbar({ dark, onToggle }) {
 
         <nav className="hidden items-center gap-9 md:flex">
           {links.map((l) => (
-            <Link
+            <HashLink
               key={l.href}
               to={l.href}
               className="text-[15px] font-medium text-canopy-800 transition hover:text-canopy-500 dark:font-mono dark:text-xs dark:uppercase dark:tracking-widest dark:text-canopy-200 dark:hover:text-gold-400"
             >
               {l.label}
-            </Link>
+            </HashLink>
           ))}
         </nav>
 
@@ -52,10 +53,10 @@ export default function Navbar({ dark, onToggle }) {
             Iniciar sesión
           </Link>
           <Link
-            to="/registro"
+            to="/contratacion"
             className="hidden rounded-md bg-canopy-600 px-5 py-2.5 text-[15px] font-semibold text-white transition hover:bg-canopy-700 dark:bg-gold-400 dark:font-mono dark:text-xs dark:uppercase dark:tracking-widest dark:text-canopy-950 dark:hover:bg-gold-300 sm:block"
           >
-            Regístrate
+            Contratar
           </Link>
           <button
             className="grid h-10 w-10 place-items-center rounded-lg border border-canopy-200 md:hidden dark:border-gold-400/25 dark:text-gold-400"
@@ -71,14 +72,14 @@ export default function Navbar({ dark, onToggle }) {
         <div className="border-t border-canopy-200 px-5 py-4 md:hidden dark:border-gold-400/10">
           <div className="flex flex-col gap-3">
             {links.map((l) => (
-              <Link
+              <HashLink
                 key={l.href}
                 to={l.href}
                 onClick={() => setOpen(false)}
                 className="py-1 font-medium text-canopy-800 dark:text-canopy-100"
               >
                 {l.label}
-              </Link>
+              </HashLink>
             ))}
             <Link
               to="/login"
@@ -88,11 +89,11 @@ export default function Navbar({ dark, onToggle }) {
               Iniciar sesión
             </Link>
             <Link
-              to="/registro"
+              to="/contratacion"
               onClick={() => setOpen(false)}
               className="mt-2 rounded-md bg-canopy-600 px-5 py-2.5 text-center font-semibold text-white dark:bg-gold-400 dark:text-canopy-950"
             >
-              Regístrate
+              Contratar
             </Link>
           </div>
         </div>

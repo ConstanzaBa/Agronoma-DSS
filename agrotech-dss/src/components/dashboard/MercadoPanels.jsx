@@ -122,7 +122,7 @@ const Header = ({ title, sub, onNew, newLabel, onReload }) => (
     </div>
     <div className="flex gap-2">
       <button onClick={onReload} aria-label="Actualizar" className={btnGhost}><RefreshCw size={15} /></button>
-      <button onClick={onNew} className={btnPrimary}><Plus size={16} /> {newLabel}</button>
+      {onNew && <button onClick={onNew} className={btnPrimary}><Plus size={16} /> {newLabel}</button>}
     </div>
   </div>
 );

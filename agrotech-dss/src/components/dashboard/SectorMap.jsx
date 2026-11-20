@@ -101,6 +101,8 @@ export default function SectorMap({
   zones,
   loading,
   lot,
+  activeZoneId = null,
+  onZoneChange,
   onSelect,
   dark,
   onRefresh,
@@ -113,11 +115,12 @@ export default function SectorMap({
   onDeleteZone,
   onEditLot,
   onDeleteLot,
+  readOnly = false, // empleado: no crea ni edita estancias/lotes
 }) {
   const [map, setMap] = useState(null);
   const [basemap, setBasemap] = useState("sat"); // sat | street
   const [sheetOpen, setSheetOpen] = useState(true);
-  const [activeZoneId, setActiveZoneId] = useState(null);
+  const setActiveZoneId = (id) => onZoneChange?.(id); // la estancia activa vive en Dashboard
   const [userPos, setUserPos] = useState(null);
   const [notice, setNotice] = useState("");
   const [draw, setDraw] = useState({ on: false, pts: [], name: "", crop: "", variedad: "" });
@@ -154,18 +157,6 @@ export default function SectorMap({
     map.flyToBounds(L.latLngBounds(l.coords), { ...fitOpts(), maxZoom: 16, duration: 1 });
   };
 
-  // Si la zona activa fue eliminada, se vuelve a elegir una existente
-  useEffect(() => {
-    if (activeZoneId && zones.length && !zones.some((z) => z.id === activeZoneId)) setActiveZoneId(null);
-  }, [zones, activeZoneId]);
-
-  // Zona activa inicial = la del lote seleccionado
-  useEffect(() => {
-    if (activeZoneId || !zones.length) return;
-    const z = zones.find((z) => z.lots.some((l) => l.id === lot?.id)) ?? zones[0];
-    setActiveZoneId(z.id);
-  }, [zones, lot, activeZoneId]);
-
   // Encuadre inicial
   useEffect(() => {
     if (!map || inited.current || !activeZoneId) return;
@@ -178,6 +169,13 @@ export default function SectorMap({
   const selectZone = (zone) => {
     setActiveZoneId(zone.id);
     focusZone(zone);
+  };
+
+  // "Agregar lote" desde una estancia concreta: la activa y empieza el dibujo en ella.
+  const addLotIn = (zone) => {
+    setActiveZoneId(zone.id);
+    focusZone(zone);
+    setDraw({ on: true, pts: [], name: "", crop: "", variedad: "" });
   };
 
   const pickPlace = async (place) => {
@@ -231,6 +229,7 @@ export default function SectorMap({
 
   /* ---- Dibujo de lotes ---- */
   const startDraw = () => {
+    if (readOnly) return;
     if (!zones.length) {
       flash("Primero creá un establecimiento.");
       return onNewZone?.();
@@ -368,7 +367,7 @@ export default function SectorMap({
 
       {/* Arriba a la derecha: agregar lote + ir al gráfico */}
       <div className="absolute right-3 top-3 z-10 flex gap-2 sm:right-4 sm:top-4">
-        <button
+        {!readOnly && <button
           onClick={draw.on ? cancelDraw : startDraw}
           disabled={saving}
           aria-label={draw.on ? "Cancelar dibujo" : "Dibujar un lote nuevo"}
@@ -376,7 +375,7 @@ export default function SectorMap({
           className="grid h-11 w-11 place-items-center rounded-xl bg-orange-500 text-white shadow-lg transition hover:bg-orange-600 disabled:opacity-60"
         >
           {draw.on ? <X size={22} /> : <Plus size={24} />}
-        </button>
+        </button>}
         <IconBtn
           icon={BarChart3}
           label="Ver telemetría"
@@ -522,13 +521,14 @@ export default function SectorMap({
           }
         }}
         onSelectZone={selectZone}
-        onPickPlace={pickPlace}
-        onNewZone={onNewZone}
+        onAddLotIn={readOnly ? undefined : addLotIn}
+        onPickPlace={readOnly ? undefined : pickPlace}
+        onNewZone={readOnly ? undefined : onNewZone}
         creatingZone={creatingZone}
-        onEditZone={onEditZone}
-        onDeleteZone={onDeleteZone}
-        onEditLot={onEditLot}
-        onDeleteLot={onDeleteLot}
+        onEditZone={readOnly ? undefined : onEditZone}
+        onDeleteZone={readOnly ? undefined : onDeleteZone}
+        onEditLot={readOnly ? undefined : onEditLot}
+        onDeleteLot={readOnly ? undefined : onDeleteLot}
       />
     </Card>
   );

@@ -81,7 +81,7 @@ export default function SiloDetailModal({ siloId, zones = [], tipos = [], refres
             </dl>
 
             <div className="mt-5 flex flex-wrap gap-2">
-              <button onClick={() => onEdit(silo)} className="rounded-lg border border-canopy-300 px-3.5 py-2 text-sm font-semibold text-canopy-800 hover:bg-canopy-100 dark:border-white/15 dark:text-canopy-100 dark:hover:bg-white/5">Editar silo</button>
+              {onEdit && <button onClick={() => onEdit(silo)} className="rounded-lg border border-canopy-300 px-3.5 py-2 text-sm font-semibold text-canopy-800 hover:bg-canopy-100 dark:border-white/15 dark:text-canopy-100 dark:hover:bg-white/5">Editar silo</button>}
               <button onClick={() => onMedicion(silo)} className="rounded-lg border border-canopy-300 px-3.5 py-2 text-sm font-semibold text-canopy-800 hover:bg-canopy-100 dark:border-white/15 dark:text-canopy-100 dark:hover:bg-white/5">Registrar medición</button>
               <button onClick={() => onMovimiento(silo)} className="rounded-lg bg-orange-500 px-3.5 py-2 text-sm font-bold text-white shadow-md hover:bg-orange-600">Registrar movimiento</button>
             </div>

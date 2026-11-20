@@ -94,11 +94,14 @@ export function SelectField({ label, id, error, options, className = "", ...prop
         {...props}
       >
         <option value="">Seleccioná una opción</option>
-        {options.map((o) => (
-          <option key={o} value={o}>
-            {o}
-          </option>
-        ))}
+        {options.map((o) => {
+          const opt = typeof o === "string" ? { value: o, label: o } : o;
+          return (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          );
+        })}
       </select>
       {error && <p className="mt-1.5 font-mono text-xs text-red-600 dark:text-red-400">{error}</p>}
     </div>

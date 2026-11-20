@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Card } from "./ui.jsx";
 import { AlertCard } from "./AlertsPanel.jsx";
 import AlertDetailModal from "./AlertDetailModal.jsx";
+import { isAdmin } from "../../auth.js";
 import RulesView from "./RulesView.jsx";
 import PriceTargetsView from "./PriceTargetsView.jsx";
 import { SEVERIDADES, TIPOS_REGLA } from "./EntityFormModal.jsx";
@@ -35,9 +36,13 @@ const chip = (on) =>
       : "border-canopy-200 bg-white text-canopy-800 hover:bg-canopy-100 dark:border-white/15 dark:bg-transparent dark:text-canopy-100 dark:hover:bg-white/5",
   ].join(" ");
 
-/** Pestaña "Alert Feed": alertas (filtros, detalle, atender/resolver), reglas y objetivos de precio. */
+/** Pestaña "Alert Feed": alertas (filtros, detalle, atender/resolver), reglas (solo lectura) y objetivos de precio (solo admin). */
 export default function AlertFeed({ alerts, loading = false, error = "", onRetry, onAction, busy = null, onResolve, onAttend, tipos = [] }) {
   const [section, setSection] = useState("alerts");
+  // Objetivos de precio: solo administrador (el backend responde 403 al empleado). Reglas: lectura para todos.
+  const admin = isAdmin();
+  const sections = SECTIONS.filter((s) => s.id !== "targets" || admin);
+  const current = !admin && section === "targets" ? "alerts" : section;
   const [filter, setFilter] = useState("all");
   const [estado, setEstado] = useState("");
   const [tipo, setTipo] = useState("");
@@ -78,25 +83,25 @@ export default function AlertFeed({ alerts, loading = false, error = "", onRetry
       <p className="mt-1 font-mono text-sm text-canopy-600 dark:text-canopy-300">Alertas de lotes, silos y mercado.</p>
 
       <div className="mt-5 flex flex-wrap gap-2 border-b border-canopy-200 pb-4 dark:border-white/10" role="tablist" aria-label="Secciones de alertas">
-        {SECTIONS.map((s) => (
-          <button key={s.id} role="tab" aria-selected={section === s.id} onClick={() => setSection(s.id)} className={chip(section === s.id)}>
+        {sections.map((s) => (
+          <button key={s.id} role="tab" aria-selected={current === s.id} onClick={() => setSection(s.id)} className={chip(current === s.id)}>
             {s.label}
           </button>
         ))}
       </div>
 
-      {section === "rules" && (
+      {current === "rules" && (
         <div className="mt-6">
           <RulesView />
         </div>
       )}
-      {section === "targets" && (
+      {current === "targets" && admin && (
         <div className="mt-6">
           <PriceTargetsView tipos={tipos} />
         </div>
       )}
 
-      {section === "alerts" && (
+      {current === "alerts" && (
         <>
           <div className="mt-5 flex flex-wrap gap-2" role="tablist" aria-label="Filtrar alertas por severidad">
             {filters.map((f) => (
@@ -141,7 +146,7 @@ export default function AlertFeed({ alerts, loading = false, error = "", onRetry
                   {serverFiltered || filter !== "all" ? (
                     <button onClick={clear} className="rounded-lg border border-canopy-300 px-4 py-2.5 font-semibold text-canopy-800 hover:bg-canopy-100 dark:border-white/15 dark:text-canopy-100 dark:hover:bg-white/5">Limpiar filtros</button>
                   ) : (
-                    <button onClick={() => setSection("rules")} className="rounded-lg bg-orange-500 px-4 py-2.5 font-bold text-white shadow-md hover:bg-orange-600">Configurar reglas de alerta</button>
+                    <button onClick={() => setSection("rules")} className="rounded-lg bg-orange-500 px-4 py-2.5 font-bold text-white shadow-md hover:bg-orange-600">Ver reglas de alerta</button>
                   )}
                 </div>
               </Card>

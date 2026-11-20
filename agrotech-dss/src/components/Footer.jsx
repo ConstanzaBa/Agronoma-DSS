@@ -1,13 +1,37 @@
 import { Link } from "react-router-dom";
-import { Github, Linkedin, Radio, Terminal } from "lucide-react";
+import { Github, Radio } from "lucide-react";
+import HashLink from "./HashLink.jsx";
 
-const internalLinks = { "API Docs": "/docs" };
+const REPO_URL = "https://github.com/ConstanzaBa/Agronoma-DSS";
 
+// Solo enlaces que existen: secciones de la landing y rutas de la app.
 const columns = [
-  { title: "Network", links: ["API Docs", "System Status", "Dev Forum"] },
-  { title: "Servicios", links: ["Cloud Hosting", "Technical Support", "Custom Integrations", "Data Migration"] },
-  { title: "Empresa", links: ["Sobre Nosotros", "Carreras", "Tech Blog", "Seguridad"] },
+  {
+    title: "Producto",
+    links: [
+      { label: "Módulos", to: "/#modulos", hash: true },
+      { label: "Sectores", to: "/#sectores", hash: true },
+      { label: "Precios", to: "/#precios", hash: true },
+    ],
+  },
+  {
+    title: "Desarrolladores",
+    links: [
+      { label: "API Docs", to: "/docs" },
+      { label: "Repositorio GitHub", href: REPO_URL },
+      { label: "Informe de amenazas", href: "/informe-de-amenazas.pdf" },
+    ],
+  },
+  {
+    title: "Cuenta",
+    links: [
+      { label: "Iniciar sesión", to: "/login" },
+      { label: "Contratar", to: "/contratacion" },
+    ],
+  },
 ];
+
+const linkCls = "transition hover:text-gold-400";
 
 export default function Footer() {
   return (
@@ -32,51 +56,37 @@ export default function Footer() {
               </h4>
               <ul className="mt-6 space-y-3 text-sm">
                 {c.links.map((l) => (
-                  <li key={l}>
-                    {internalLinks[l] ? (
-                      <Link to={internalLinks[l]} className="transition hover:text-gold-400">
-                        {l}
-                      </Link>
-                    ) : (
-                      <a href="#" className="transition hover:text-gold-400">
-                        {l}
+                  <li key={l.label}>
+                    {l.href ? (
+                      <a href={l.href} target="_blank" rel="noopener noreferrer" className={linkCls}>
+                        {l.label}
                       </a>
+                    ) : l.hash ? (
+                      <HashLink to={l.to} className={linkCls}>{l.label}</HashLink>
+                    ) : (
+                      <Link to={l.to} className={linkCls}>{l.label}</Link>
                     )}
                   </li>
                 ))}
               </ul>
-
-              {c.title === "Network" && (
-                <>
-                  <h4 className="mt-10 font-mono text-xs font-bold uppercase tracking-widest text-gold-400">
-                    <span className="hidden dark:inline">// </span>Open Source
-                  </h4>
-                  <ul className="mt-6 space-y-3 text-sm">
-                    <li><a href="#" className="transition hover:text-gold-400">Packages</a></li>
-                    <li><a href="#" className="transition hover:text-gold-400">GitHub Repo</a></li>
-                  </ul>
-                </>
-              )}
             </div>
           ))}
 
           <div>
-            <p className="flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-gold-400">
-              <Terminal size={14} /> Lang: ES-LA
-            </p>
-            <p className="mt-4 font-mono text-xs leading-relaxed text-canopy-300">
-              Agronoma Precision DSS v2.4. Soluciones agronómicas basadas en datos para gestión
-              agrícola inteligente e IoT.
+            <p className="font-mono text-xs leading-relaxed text-canopy-300">
+              Software DSS para la administración interna de tus lotes: campo, sensores IoT, silos,
+              mercado y alertas en un solo lugar.
             </p>
             <div className="mt-6 flex gap-4 text-gold-400">
-              <a href="#" aria-label="GitHub"><Github size={20} /></a>
-              <a href="#" aria-label="LinkedIn"><Linkedin size={20} /></a>
+              <a href={REPO_URL} target="_blank" rel="noopener noreferrer" aria-label="GitHub">
+                <Github size={20} />
+              </a>
             </div>
           </div>
         </div>
 
         <div className="mt-14 border-t border-white/10 pt-8 text-center font-mono text-[11px] uppercase tracking-wider text-canopy-300/70">
-          System_Copyright © 2025 Agronoma. Todos los derechos reservados.
+          System_Copyright © {new Date().getFullYear()} Agronoma. Todos los derechos reservados.
         </div>
       </div>
     </footer>

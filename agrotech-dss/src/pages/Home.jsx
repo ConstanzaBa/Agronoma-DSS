@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import Navbar from "../components/Navbar.jsx";
 import Hero from "../components/Hero.jsx";
 import Modules from "../components/Modules.jsx";
+import Sectors from "../components/Sectors.jsx";
 import Pricing from "../components/Pricing.jsx";
 import Footer from "../components/Footer.jsx";
 
@@ -25,6 +26,7 @@ export default function Home({ dark, onToggle }) {
       <main>
         <Hero />
         <Modules />
+        <Sectors />
         <Pricing />
       </main>
       <Footer />

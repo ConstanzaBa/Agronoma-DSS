@@ -5,8 +5,11 @@ import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import ApiDocs from "./pages/ApiDocs.jsx";
+import Contratacion from "./pages/Contratacion.jsx";
+import CorreoSimulado from "./pages/CorreoSimulado.jsx";
+import PrimerIngreso from "./pages/PrimerIngreso.jsx";
 import { useTheme } from "./hooks.js";
-import { getSession } from "./auth.js";
+import { getSession, isFirstLoginPending } from "./auth.js";
 import { endSession } from "./api/http.js";
 import { DialogProvider } from "./components/dialog/DialogProvider.jsx";
 
@@ -21,12 +24,30 @@ function RequireAuth({ children }) {
     const t = setTimeout(endSession, Math.min(ms, 2 ** 31 - 1));
     return () => clearTimeout(t);
   }, [expiraEn]);
-  return session ? children : <Navigate to="/login" replace />;
+  if (!session) return <Navigate to="/login" replace />;
+  // Primer ingreso pendiente: no se permite la navegación normal hasta completarlo.
+  if (isFirstLoginPending()) return <Navigate to="/primer-ingreso" replace />;
+  return children;
 }
 
-/** Login/registro: con sesión activa se va directo al panel. */
+/** Primer ingreso: requiere sesión con el primer ingreso realmente pendiente; si no, va al panel. */
+function RequireFirstLogin({ children }) {
+  const expiraEn = getSession()?.expiraEn;
+  useEffect(() => {
+    const ms = expiraEn ? Date.parse(expiraEn) - Date.now() : NaN;
+    if (!(ms > 0)) return;
+    const t = setTimeout(endSession, Math.min(ms, 2 ** 31 - 1));
+    return () => clearTimeout(t);
+  }, [expiraEn]);
+  if (!getSession()) return <Navigate to="/login" replace />;
+  if (!isFirstLoginPending()) return <Navigate to="/dashboard" replace />;
+  return children;
+}
+
+/** Login / contratación / registro de empleados: con sesión activa se va al panel (o al primer ingreso). */
 function GuestOnly({ children }) {
-  return getSession() ? <Navigate to="/dashboard" replace /> : children;
+  if (!getSession()) return children;
+  return <Navigate to={isFirstLoginPending() ? "/primer-ingreso" : "/dashboard"} replace />;
 }
 
 export default function App() {
@@ -38,7 +59,10 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Home dark={dark} onToggle={toggle} />} />
         <Route path="/login" element={<GuestOnly><Login dark={dark} onToggle={toggle} /></GuestOnly>} />
+        <Route path="/contratacion" element={<GuestOnly><Contratacion dark={dark} onToggle={toggle} /></GuestOnly>} />
         <Route path="/registro" element={<GuestOnly><Register dark={dark} onToggle={toggle} /></GuestOnly>} />
+        <Route path="/correo-simulado/:token" element={<CorreoSimulado dark={dark} onToggle={toggle} />} />
+        <Route path="/primer-ingreso" element={<RequireFirstLogin><PrimerIngreso dark={dark} onToggle={toggle} /></RequireFirstLogin>} />
         <Route path="/dashboard" element={<RequireAuth><Dashboard dark={dark} onToggle={toggle} /></RequireAuth>} />
         <Route path="/docs" element={<ApiDocs dark={dark} onToggle={toggle} />} />
         <Route path="*" element={<Navigate to="/" replace />} />

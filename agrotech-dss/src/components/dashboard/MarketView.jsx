@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { Check, Info, Loader2, Pencil, X } from "lucide-react";
+import { isAdmin } from "../../auth.js";
 import { Card, monoLabel } from "./ui.jsx";
 import ScoreRing from "./ScoreRing.jsx";
 import { CotizacionesPanel, DivisasPanel, EmptyAction, IndiceHistorial, InsumosPanel, MargenPanel } from "./MercadoPanels.jsx";
@@ -107,11 +108,11 @@ function QuotesTable({ quotes, loading, loadError, onPrice }) {
                         <X size={16} />
                       </button>
                     </span>
-                  ) : (
+                  ) : onPrice ? (
                     <button onClick={() => start(q)} disabled={saving} aria-label={`Editar precio de ${q.crop}`} className="rounded p-1.5 text-canopy-500 hover:bg-canopy-100 hover:text-canopy-800 dark:hover:bg-white/10 dark:hover:text-white">
                       <Pencil size={15} />
                     </button>
-                  )}
+                  ) : null}
                 </td>
               </tr>
             ))}
@@ -121,7 +122,7 @@ function QuotesTable({ quotes, loading, loadError, onPrice }) {
       {error && <p role="alert" className="mt-2 font-mono text-xs text-red-600 dark:text-red-400">{error}</p>}
       <p className="mt-4 flex items-start gap-2 text-xs leading-relaxed text-canopy-600 dark:text-canopy-300">
         <Info size={14} className="mt-0.5 shrink-0" />
-        Precio de referencia en US$/t; el valor en ARS/t lo calcula el backend con el dólar oficial BNA (puede diferir de la pizarra en pesos). Fuentes: granos.ar (Cámara Arbitral de Rosario) y DolarAPI. Al editar se carga el precio de hoy en US$/t (mercado Rosario).
+        Precio de referencia en US$/t; el valor en ARS/t lo calcula el backend con el dólar oficial BNA (puede diferir de la pizarra en pesos). Fuentes: granos.ar (Cámara Arbitral de Rosario) y DolarAPI.
       </p>
     </Card>
   );
@@ -137,13 +138,16 @@ const SECTIONS = [
 
 /** Pestaña "Market Predict": resumen (cotizaciones + índice de venta) y secciones de Mercado. */
 export default function MarketView({ quotes, quotesLoading, quotesError, silos, silosLoading, opp, oppLoading, oppError, oppSiloId, onPrice, onSilo, tipos = [], version = 0, actions = {} }) {
-  const [section, setSection] = useState("resumen");
+  // Margen, supuestos, índice de venta e historial: solo administrador. Cotizaciones, divisas e insumos: todos (solo lectura).
+  const admin = isAdmin();
+  const sections = SECTIONS.filter((s) => s.id !== "margen" || admin);
+  const [sectionSel, setSection] = useState("resumen");
+  const section = !admin && sectionSel === "margen" ? "resumen" : sectionSel;
   const [margenCultivo, setMargenCultivo] = useState("");
   const silo = silos.find((s) => s.id === oppSiloId);
   const tipoDe = (s) => tipos.find((t) => t.nombre === s?.crop);
   const handlers = {
     supuestos: (s) => actions.onSupuestos?.({ tipo_cultivo_id: tipoDe(s)?.id }),
-    cotizacion: (s) => actions.onNewCotizacion?.({ tipo_cultivo_id: tipoDe(s)?.id }),
     medicion: (s) => actions.onMedicion?.(s.id),
     movimiento: (s) => actions.onMovimiento?.(s.id),
     editSilo: (s) => actions.onEditSilo?.(s.id),
@@ -153,11 +157,11 @@ export default function MarketView({ quotes, quotesLoading, quotesError, silos, 
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-canopy-900 dark:text-white">Market Predict</h2>
-        <p className="mt-1 font-mono text-sm text-canopy-600 dark:text-canopy-300">Cotizaciones, divisas, insumos, margen y oportunidad de venta.</p>
+        <p className="mt-1 font-mono text-sm text-canopy-600 dark:text-canopy-300">{admin ? "Cotizaciones, divisas, insumos, margen y oportunidad de venta." : "Cotizaciones, divisas e insumos."}</p>
       </div>
 
       <div role="tablist" className="flex gap-2 overflow-x-auto pb-1">
-        {SECTIONS.map((s) => (
+        {sections.map((s) => (
           <button
             key={s.id}
             role="tab"
@@ -176,9 +180,10 @@ export default function MarketView({ quotes, quotesLoading, quotesError, silos, 
 
       {section === "resumen" && (
         <>
-          <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+          <div className={`grid grid-cols-1 gap-5 ${admin ? "xl:grid-cols-2" : ""}`}>
             <QuotesTable quotes={quotes} loading={quotesLoading} loadError={quotesError} onPrice={onPrice} />
 
+            {admin && (
             <Card gradient className="min-w-0 p-5">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <h3 className={monoLabel}>Oportunidad de venta</h3>
@@ -209,15 +214,16 @@ export default function MarketView({ quotes, quotesLoading, quotesError, silos, 
               )}
               {opp && <OppBody opp={opp} handlers={handlers} loading={oppLoading} />}
             </Card>
+            )}
           </div>
-          {silo && <IndiceHistorial siloId={silo.id} version={`${version}-${opp?.score ?? ""}`} />}
+          {admin && silo && <IndiceHistorial siloId={silo.id} version={`${version}-${opp?.score ?? ""}`} />}
         </>
       )}
 
-      {section === "cotizaciones" && <CotizacionesPanel tipos={tipos} version={version} onNew={() => actions.onNewCotizacion?.()} />}
-      {section === "divisas" && <DivisasPanel version={version} onNew={() => actions.onNewDivisa?.()} />}
-      {section === "insumos" && <InsumosPanel version={version} onNew={() => actions.onNewInsumo?.()} />}
-      {section === "margen" && <MargenPanel tipos={tipos} version={version} cultivoId={margenCultivo} setCultivoId={setMargenCultivo} onSupuestos={(i) => actions.onSupuestos?.(i)} />}
+      {section === "cotizaciones" && <CotizacionesPanel tipos={tipos} version={version} />}
+      {section === "divisas" && <DivisasPanel version={version} />}
+      {section === "insumos" && <InsumosPanel version={version} />}
+      {section === "margen" && admin && <MargenPanel tipos={tipos} version={version} cultivoId={margenCultivo} setCultivoId={setMargenCultivo} onSupuestos={(i) => actions.onSupuestos?.(i)} />}
     </div>
   );
 }
@@ -228,10 +234,8 @@ const ruleAction = (r, h) => {
   const hint = r.hint ?? "";
   if (r.id === "margen") {
     if (/supuestos/i.test(d) || /supuestos-margen/.test(hint)) return { label: "Cargar supuestos", run: h.supuestos };
-    if (/cotizaci/i.test(d)) return { label: "Cargar cotización", run: h.cotizacion };
     if (/cultivo/i.test(d)) return { label: "Asignar cultivo", run: h.editSilo };
   }
-  if (r.id === "tendencia_precio" && /3 d/.test(hint)) return { label: "Cargar cotización", run: h.cotizacion };
   if ((r.id === "humedad_grano" || r.id === "temperatura_nucleo") && /sin medici/i.test(d)) return { label: "Registrar mediciones", run: h.medicion };
   if (r.id === "stock_disponible") return { label: "Registrar movimiento", run: h.movimiento };
   return null;

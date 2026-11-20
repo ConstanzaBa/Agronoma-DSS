@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { AlertCircle, Loader2, Lock, Mail } from "lucide-react";
 import AuthLayout, { primaryBtn } from "../components/auth/AuthLayout.jsx";
 import { Field, PasswordField } from "../components/auth/Field.jsx";
-import { signIn } from "../auth.js";
+import { readPendingFlag, signIn } from "../auth.js";
 import { login } from "../api/auth.js";
 
 const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -20,7 +20,7 @@ export default function Login({ dark, onToggle }) {
   const validate = () => {
     const e = {};
     if (!emailRe.test(form.email)) e.email = "Ingresá un correo válido.";
-    if (form.password.length < 8) e.password = "La contraseña debe tener al menos 8 caracteres.";
+    if (!form.password) e.password = "Ingresá tu contraseña."; // la temporal puede tener otra longitud que las normales
     return e;
   };
 
@@ -35,7 +35,8 @@ export default function Login({ dark, onToggle }) {
       const data = await login(form.email.trim(), form.password);
       if (!data?.token) throw new Error("El servidor no devolvió un token de sesión.");
       signIn(data, form.remember);
-      navigate("/dashboard", { replace: true });
+      // primer_ingreso_pendiente = true → el primer ingreso es obligatorio antes de usar el panel.
+      navigate(readPendingFlag(data) ? "/primer-ingreso" : "/dashboard", { replace: true });
     } catch (err) {
       const next = {};
       if (err.fields?.correo) next.email = err.fields.correo;
@@ -54,9 +55,14 @@ export default function Login({ dark, onToggle }) {
       subtitle="Accedé al panel de gestión de tus lotes."
       footer={
         <>
-          ¿No tenés cuenta?{" "}
+          ¿Querés usar Agronoma?{" "}
+          <Link to="/contratacion" className="font-bold text-canopy-600 underline-offset-4 hover:underline dark:text-gold-400">
+            Contratá un plan
+          </Link>
+          <br />
+          ¿Sos empleado?{" "}
           <Link to="/registro" className="font-bold text-canopy-600 underline-offset-4 hover:underline dark:text-gold-400">
-            Registrate
+            Registrate con tu código
           </Link>
         </>
       }

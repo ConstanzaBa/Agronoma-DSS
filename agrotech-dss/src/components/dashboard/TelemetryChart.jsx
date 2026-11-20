@@ -54,6 +54,7 @@ export default function TelemetryChart({ lot: lotProp }) {
     const hasta = Date.now();
     setNow(hasta);
     setHover(null);
+    setLecturas([]); // no mostrar lecturas del lote anterior mientras carga el nuevo
     setState("loading");
     listLecturas(lotProp.id, { desde: new Date(hasta - DAYS * DAY_MS).toISOString(), hasta: new Date(hasta).toISOString() }, ctrl.signal)
       .then((r) => {

@@ -1,4 +1,20 @@
-import { request } from "./http.js";
+import { ApiError, request as http } from "./http.js";
+
+// Mensajes entendibles para los 403 del backend (el cuerpo trae `codigo`; el texto original es técnico).
+const MENSAJES = {
+  sin_permiso: "No tenés permiso para ver esta información: es solo para administradores.",
+  dato_global: "Los datos de mercado son globales y no se cargan desde una cuenta.",
+  rol_invalido: "Tu rol no está habilitado para usar esta función. Consultá al administrador de tu cuenta.",
+  sin_estancia: "Todavía no tenés una estancia asignada, por eso no se puede mostrar esta información. Consultá al administrador de tu cuenta.",
+};
+async function request(path, opts) {
+  try {
+    return await http(path, opts);
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 403 && MENSAJES[err.code]) err.message = MENSAJES[err.code];
+    throw err;
+  }
+}
 import { listTiposCultivo } from "./campo.js";
 import { pctChange } from "../lib/opportunity.js";
 

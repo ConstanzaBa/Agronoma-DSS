@@ -1,46 +1,69 @@
+import { PenLine } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
-import { PenLine } from "lucide-react";
-import Sidebar from "../components/dashboard/Sidebar.jsx";
-import SectorMap from "../components/dashboard/SectorMap.jsx";
-import TelemetryChart from "../components/dashboard/TelemetryChart.jsx";
-import OpportunityIndex from "../components/dashboard/OpportunityIndex.jsx";
+import { logout as apiLogout, getMe } from "../api/auth.js";
+import { createDispositivo, createLluvia } from "../api/campo.js";
+import {
+  createCotizacion,
+  createDivisa,
+  createInsumo,
+  putSupuestos,
+} from "../api/mercado.js";
+import { getSilo } from "../api/silos.js";
+import { getSession, getUser, isAdminUser, isFirstLoginPending, signOut, syncFromMe } from "../auth.js";
+import AlertFeed from "../components/dashboard/AlertFeed.jsx";
 import AlertsPanel from "../components/dashboard/AlertsPanel.jsx";
-import { Card } from "../components/dashboard/ui.jsx";
-import { getSession, setUser, signOut } from "../auth.js";
-import { getMe, logout as apiLogout } from "../api/auth.js";
-import { useZones } from "../hooks/useZones.js";
-import { createLluvia } from "../api/campo.js";
-import { useAlertas } from "../hooks/useAlertas.js";
-import { useMercado } from "../hooks/useMercado.js";
-import { useSilos } from "../hooks/useSilos.js";
-import { useLluvia } from "../hooks/useLluvia.js";
-import ManualEntryModal from "../components/dashboard/ManualEntryModal.jsx";
-import SilosView from "../components/dashboard/SilosView.jsx";
 import EntityFormModal from "../components/dashboard/EntityFormModal.jsx";
 import LotDetailPanel from "../components/dashboard/LotDetailPanel.jsx";
-import SiloDetailModal from "../components/dashboard/SiloDetailModal.jsx";
-import { createDispositivo } from "../api/campo.js";
-import { createCotizacion, createDivisa, createInsumo, putSupuestos } from "../api/mercado.js";
-import { getSilo } from "../api/silos.js";
+import ManualEntryModal from "../components/dashboard/ManualEntryModal.jsx";
 import MarketView from "../components/dashboard/MarketView.jsx";
-import AlertFeed from "../components/dashboard/AlertFeed.jsx";
+import OpportunityIndex from "../components/dashboard/OpportunityIndex.jsx";
+import SectorMap from "../components/dashboard/SectorMap.jsx";
+import Sidebar from "../components/dashboard/Sidebar.jsx";
+import SiloDetailModal from "../components/dashboard/SiloDetailModal.jsx";
+import SilosView from "../components/dashboard/SilosView.jsx";
+import ProfileView from "../components/dashboard/ProfileView.jsx";
+import TeamView from "../components/dashboard/TeamView.jsx";
+import TelemetryChart from "../components/dashboard/TelemetryChart.jsx";
 import { useDialog } from "../components/dialog/DialogProvider.jsx";
+import { useAlertas } from "../hooks/useAlertas.js";
+import { useLluvia } from "../hooks/useLluvia.js";
+import { useMercado } from "../hooks/useMercado.js";
+import { useSilos } from "../hooks/useSilos.js";
+import { useZones } from "../hooks/useZones.js";
 
 export default function Dashboard({ dark, onToggle }) {
   const navigate = useNavigate();
   const [tab, setTab] = useState("map");
-  const [lotId, setLotId] = useState(null);
+  const [me, setMe] = useState(() => getUser()); // usuario de la sesión; se refresca con GET /auth/me
+  // El rol solo decide qué UI se muestra; la seguridad real (cuenta, estancia, permisos) se aplica en el backend.
+  const admin = isAdminUser(me); // admin = rol "admin"; empleados y roles desconocidos quedan sin acciones administrativas
+  const activeTab = tab === "team" && !admin ? "map" : tab; // protege la pestaña admin frente a cambios de rol/estado
+  const [lotId, setLotId] = useState(null); // lote elegido explícitamente
+  const [zoneId, setZoneId] = useState(null); // estancia activa (Estancia 1:N Lotes)
   const [syncState, setSyncState] = useState("idle"); // idle | syncing | done
   const timers = useRef([]);
-  const { zones, tipos, loading, error, reload, addZone, createZone, addLot, editZone, removeZone, editLot, removeLot } = useZones();
+  const {
+    zones,
+    tipos,
+    loading,
+    error,
+    reload,
+    addZone,
+    createZone,
+    addLot,
+    editZone,
+    removeZone,
+    editLot,
+    removeLot,
+  } = useZones();
   const [form, setForm] = useState(null); // null | "zone" | "silo" | "lot" | "device" | "medicion"
   const [formInitial, setFormInitial] = useState(null); // objeto a editar (null = alta)
   const [siloView, setSiloView] = useState(null); // id del silo en el modal de detalle
   const [siloRefresh, setSiloRefresh] = useState(0);
   const [deviceRefresh, setDeviceRefresh] = useState(0);
   const silosApi = useSilos();
-  const mercado = useMercado(silosApi.silos);
+  const mercado = useMercado(silosApi.silos, { conIndice: admin }); // el índice de venta es solo del admin
   const alertas = useAlertas();
   const [entry, setEntry] = useState(null); // null | { kind, siloId? }
   const dialog = useDialog();
@@ -59,7 +82,12 @@ export default function Dashboard({ dark, onToggle }) {
   useEffect(() => {
     if (!getSession()) return;
     getMe()
-      .then((u) => u && setUser(u))
+      .then((u) => {
+        if (!u) return;
+        setMe(syncFromMe(u)); // usuario con rol + primer_ingreso_pendiente de /auth/me
+        // Primer ingreso pendiente: el flujo es obligatorio antes del acceso normal.
+        if (isFirstLoginPending()) navigate("/primer-ingreso", { replace: true });
+      })
       .catch((err) => {
         // 403 en /me: el token no pertenece a una persona → sesión inválida para este panel.
         if (err.status === 403) {
@@ -69,10 +97,34 @@ export default function Dashboard({ dark, onToggle }) {
       });
   }, []);
 
-  useEffect(() => () => { timers.current.forEach(clearTimeout); clearTimeout(toastTimer.current); }, []);
+  useEffect(
+    () => () => {
+      timers.current.forEach(clearTimeout);
+      clearTimeout(toastTimer.current);
+    },
+    [],
+  );
 
   const allLots = useMemo(() => zones.flatMap((z) => z.lots), [zones]);
-  const lot = allLots.find((l) => l.id === lotId) ?? allLots[0];
+  // Estancia activa: la elegida; si no existe (o fue eliminada), la del lote elegido, o la primera.
+  const zone =
+    zones.find((z) => z.id === zoneId) ??
+    zones.find((z) => z.lots.some((l) => l.id === lotId)) ??
+    zones[0] ??
+    null;
+  // Lote seleccionado: solo puede ser un lote DE LA ESTANCIA ACTIVA. Nunca se cae a un lote de otra estancia.
+  const lot = zone
+    ? (zone.lots.find((l) => l.id === lotId) ?? zone.lots[0] ?? null)
+    : null;
+  const changeZone = (id) => {
+    setZoneId(id);
+    // al cambiar de estancia se descarta el lote elegido si no pertenece a la nueva
+    setLotId((cur) =>
+      zones.find((z) => z.id === id)?.lots.some((l) => l.id === cur)
+        ? cur
+        : null,
+    );
+  };
   const lluvia = useLluvia(allLots);
 
   // Sin sesión → pantalla de login
@@ -81,7 +133,13 @@ export default function Dashboard({ dark, onToggle }) {
   const sync = () => {
     if (syncState === "syncing") return;
     setSyncState("syncing");
-    Promise.all([reload(), silosApi.reload(), mercado.reload(), alertas.reload(), lluvia.reload()]).finally(() => {
+    Promise.all([
+      reload(),
+      silosApi.reload(),
+      mercado.reload(),
+      alertas.reload(),
+      lluvia.reload(),
+    ]).finally(() => {
       setSyncState("done");
       timers.current.push(setTimeout(() => setSyncState("idle"), 1800));
     });
@@ -98,7 +156,11 @@ export default function Dashboard({ dark, onToggle }) {
       await fn(a.id);
       flash(okMsg);
     } catch (err) {
-      await dialog.alert({ variant: "error", title: failTitle, message: err.message || "Intentá de nuevo en unos minutos." });
+      await dialog.alert({
+        variant: "error",
+        title: failTitle,
+        message: err.message || "Intentá de nuevo en unos minutos.",
+      });
     } finally {
       busyRef.current = false;
       setBusyAlert(null);
@@ -108,7 +170,13 @@ export default function Dashboard({ dark, onToggle }) {
   const onAlertAction = async (a) => {
     if (a.go === "manual-rain") return setEntry({ kind: "rain" });
     if (a.go) return setTab(a.go);
-    await runAlertOp(a, "attend", alertas.attend, a.done ?? "Alerta atendida", "No se pudo atender la alerta"); // PATCH /v1/alertas/alertas/{id}/atender
+    await runAlertOp(
+      a,
+      "attend",
+      alertas.attend,
+      a.done ?? "Alerta atendida",
+      "No se pudo atender la alerta",
+    ); // PATCH /v1/alertas/alertas/{id}/atender
   };
 
   const onAlertResolve = async (a) => {
@@ -125,7 +193,14 @@ export default function Dashboard({ dark, onToggle }) {
       busyRef.current = false;
       return;
     }
-    await runAlertOp(a, "resolve", alertas.resolve, "Alerta resuelta", "No se pudo resolver la alerta", true); // PATCH /v1/alertas/alertas/{id}/resolver
+    await runAlertOp(
+      a,
+      "resolve",
+      alertas.resolve,
+      "Alerta resuelta",
+      "No se pudo resolver la alerta",
+      true,
+    ); // PATCH /v1/alertas/alertas/{id}/resolver
   };
 
   // Lanza el error al modal de Carga manual, que lo muestra dentro del formulario y mantiene los datos.
@@ -145,10 +220,17 @@ export default function Dashboard({ dark, onToggle }) {
     }
     setEntry(null);
     alertas.reload({ silent: true }); // el backend puede haber generado alertas nuevas
-    flash(load.kind === "rain" ? `Lluvia registrada: ${load.mm} mm` : `${load.direction === "out" ? "Despacho" : "Ingreso"} de ${load.tons} t en ${load.siloName}`);
+    flash(
+      load.kind === "rain"
+        ? `Lluvia registrada: ${load.mm} mm`
+        : `${load.direction === "out" ? "Despacho" : "Ingreso"} de ${load.tons} t en ${load.siloName}`,
+    );
   };
 
+  const ADMIN_FORMS = ["zone", "lot", "device", "silo", "supuestos"]; // estancias, lotes, sensores, alta/edición de silos y supuestos de margen: solo administrador
+  const BLOCKED_FORMS = ["cotizacion", "divisa", "insumo"]; // datos globales de mercado: carga manual bloqueada para todos
   const openForm = (kind, initial = null) => {
+    if (BLOCKED_FORMS.includes(kind) || (ADMIN_FORMS.includes(kind) && !admin)) return;
     setFormInitial(initial);
     setForm(kind);
   };
@@ -166,12 +248,30 @@ export default function Dashboard({ dark, onToggle }) {
   };
 
   const confirmDelete = (title, message) =>
-    dialog.confirm({ variant: "warning", danger: true, title, message, confirmText: "Eliminar", cancelText: "Cancelar" });
+    dialog.confirm({
+      variant: "warning",
+      danger: true,
+      title,
+      message,
+      confirmText: "Eliminar",
+      cancelText: "Cancelar",
+    });
 
-  const failAlert = (title, err) => dialog.alert({ variant: "error", title, message: err?.message || "Intentá de nuevo en unos minutos." });
+  const failAlert = (title, err) =>
+    dialog.alert({
+      variant: "error",
+      title,
+      message: err?.message || "Intentá de nuevo en unos minutos.",
+    });
 
   const deleteZone = async (z) => {
-    if (!(await confirmDelete("¿Eliminar el establecimiento?", `Se eliminará “${z.name}”. Esta acción no se puede deshacer.`))) return;
+    if (
+      !(await confirmDelete(
+        "¿Eliminar el establecimiento?",
+        `Se eliminará “${z.name}”. Esta acción no se puede deshacer.`,
+      ))
+    )
+      return;
     try {
       await removeZone(z.id); // DELETE /v1/campo/establecimientos/{id} + refresco
       silosApi.reload();
@@ -182,7 +282,13 @@ export default function Dashboard({ dark, onToggle }) {
   };
 
   const deleteLot = async (l) => {
-    if (!(await confirmDelete("¿Eliminar el lote?", `Se eliminará “${l.name}”. Esta acción no se puede deshacer.`))) return;
+    if (
+      !(await confirmDelete(
+        "¿Eliminar el lote?",
+        `Se eliminará “${l.name}”. Esta acción no se puede deshacer.`,
+      ))
+    )
+      return;
     try {
       await removeLot(l.id); // DELETE /v1/campo/lotes/{id} + refresco
       if (l.id === lotId) setLotId(null);
@@ -206,13 +312,27 @@ export default function Dashboard({ dark, onToggle }) {
       await editLot(formInitial.id, body); // PUT /v1/campo/lotes/{id}
       flash("Lote actualizado");
     } else if (form === "device") {
-      const r = await createDispositivo(lot.id, body); // POST /v1/campo/lotes/{id}/dispositivos
+      // El lote se fija al abrir el formulario (formInitial): el sensor va al lote que se vio, no al que haya al enviar.
+      if (!formInitial?.id)
+        throw new Error("Seleccioná un lote antes de crear un sensor.");
+      const r = await createDispositivo(formInitial.id, body); // POST /v1/campo/lotes/{id}/dispositivos
       setDeviceRefresh((n) => n + 1);
       reload();
       flash("Sensor creado");
-      const token = r?.token == null ? "" : typeof r.token === "string" ? r.token : JSON.stringify(r.token);
+      const token =
+        r?.token == null
+          ? ""
+          : typeof r.token === "string"
+            ? r.token
+            : JSON.stringify(r.token);
       closeForm();
-      await dialog.alert({ variant: "success", title: "Sensor creado", message: token ? `${r?.aviso ?? "Guardalo ahora: no se vuelve a mostrar"}\n\n${token}` : "El sensor fue creado." });
+      await dialog.alert({
+        variant: "success",
+        title: "Sensor creado",
+        message: token
+          ? `${r?.aviso ?? "Guardalo ahora: no se vuelve a mostrar"}\n\n${token}`
+          : "El sensor fue creado.",
+      });
       return;
     } else if (form === "cotizacion") {
       await createCotizacion(body); // POST /v1/mercado/cotizaciones
@@ -262,7 +382,7 @@ export default function Dashboard({ dark, onToggle }) {
   return (
     <div className="min-h-screen bg-[#f2f6ef] text-canopy-900 dark:bg-gradient-to-br dark:from-[#071d0c] dark:via-[#0b2910] dark:to-[#10361a] dark:text-white lg:grid lg:grid-cols-[260px_minmax(0,1fr)]">
       <Sidebar
-        tab={tab}
+        tab={activeTab}
         onTab={setTab}
         dark={dark}
         onToggle={onToggle}
@@ -270,10 +390,12 @@ export default function Dashboard({ dark, onToggle }) {
         onSync={sync}
         onLogout={logout}
         alertCount={alertas.activeCount}
+        user={me}
+        isAdmin={admin}
       />
 
       <main className="min-w-0 p-4 sm:p-6">
-        {tab === "map" && (
+        {activeTab === "map" && (
           <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
             <div className="min-w-0 space-y-5">
               <SectorMap
@@ -281,6 +403,8 @@ export default function Dashboard({ dark, onToggle }) {
                 loading={loading}
                 error={error}
                 lot={lot}
+                activeZoneId={zone?.id ?? null}
+                onZoneChange={changeZone}
                 onSelect={setLotId}
                 dark={dark}
                 onRefresh={reload}
@@ -292,29 +416,72 @@ export default function Dashboard({ dark, onToggle }) {
                 onDeleteLot={deleteLot}
                 tipos={tipos}
                 onNewZone={() => openForm("zone")}
+                readOnly={!admin}
               />
               <LotDetailPanel
                 lot={lot}
-                zone={zones.find((z) => z.id === lot?.zoneId)}
+                zone={zone}
+                onSelectLot={setLotId}
                 rain={lluvia.items}
                 refreshKey={deviceRefresh}
-                onAddDevice={() => openForm("device")}
-                onRain={() => setEntry({ kind: "rain", lotId: String(lot.id) })}
+                canManage={admin}
+                onAddDevice={() => lot && openForm("device", lot)}
+                onRain={() =>
+                  lot && setEntry({ kind: "rain", lotId: String(lot.id) })
+                }
               />
               <TelemetryChart lot={lot} />
             </div>
             <div className="min-w-0 space-y-7">
-              <OpportunityIndex opp={mercado.opportunity} loading={mercado.oppLoading} error={mercado.oppError} hasSilos={silosApi.silos.length > 0} silosLoading={silosApi.loading} onAddSilo={() => openForm("silo")} onRefresh={mercado.refresh} onOpenMarket={() => setTab("market")} />
-              <AlertsPanel alerts={alertas.alerts} attended={alertas.attended} busy={busyAlert} onAction={onAlertAction} onSeeAll={() => setTab("alerts")} />
+              {admin && (
+
+              <OpportunityIndex
+                opp={mercado.opportunity}
+                loading={mercado.oppLoading}
+                error={mercado.oppError}
+                hasSilos={silosApi.silos.length > 0}
+                silosLoading={silosApi.loading}
+                onAddSilo={() => openForm("silo")}
+                onRefresh={mercado.refresh}
+                onOpenMarket={() => setTab("market")}
+              />
+
+              )}
+              <AlertsPanel
+                alerts={alertas.alerts}
+                attended={alertas.attended}
+                busy={busyAlert}
+                onAction={onAlertAction}
+                onSeeAll={() => setTab("alerts")}
+              />
             </div>
           </div>
         )}
 
-        {tab === "alerts" && (
-          <AlertFeed alerts={alertas.alerts} attended={alertas.attended} loading={alertas.loading} error={alertas.error} onRetry={alertas.reload} busy={busyAlert} onAction={onAlertAction} onResolve={onAlertResolve} onAttend={(a) => runAlertOp(a, "attend", alertas.attend, "Alerta atendida", "No se pudo atender la alerta")} tipos={tipos} />
+        {activeTab === "alerts" && (
+          <AlertFeed
+            alerts={alertas.alerts}
+            attended={alertas.attended}
+            loading={alertas.loading}
+            error={alertas.error}
+            onRetry={alertas.reload}
+            busy={busyAlert}
+            onAction={onAlertAction}
+            onResolve={onAlertResolve}
+            onAttend={(a) =>
+              runAlertOp(
+                a,
+                "attend",
+                alertas.attend,
+                "Alerta atendida",
+                "No se pudo atender la alerta",
+              )
+            }
+            tipos={tipos}
+          />
         )}
 
-        {tab === "silos" && (
+        {activeTab === "silos" && (
           <SilosView
             silos={silosApi.silos}
             loads={[...silosApi.movements, ...lluvia.items]}
@@ -323,12 +490,12 @@ export default function Dashboard({ dark, onToggle }) {
             error={silosApi.error}
             onRetry={silosApi.reload}
             onRegister={setEntry}
-            onAddSilo={() => openForm("silo")}
+            onAddSilo={admin ? () => openForm("silo") : undefined}
             onDetail={setSiloView}
           />
         )}
 
-        {tab === "market" && (
+        {activeTab === "market" && (
           <MarketView
             quotes={mercado.quotes}
             quotesLoading={mercado.quotesLoading}
@@ -338,23 +505,24 @@ export default function Dashboard({ dark, onToggle }) {
             tipos={tipos}
             version={mercado.version}
             actions={{
-              onAddSilo: () => openForm("silo"),
+              onAddSilo: admin ? () => openForm("silo") : undefined,
               onMedicion: (id) => openSiloForm("medicion", id),
-              onEditSilo: (id) => openSiloForm("silo", id),
-              onMovimiento: (id) => setEntry({ kind: "silo", siloId: String(id) }),
-              onNewCotizacion: (init) => openForm("cotizacion", init?.tipo_cultivo_id ? init : null),
-              onNewDivisa: () => openForm("divisa"),
-              onNewInsumo: () => openForm("insumo"),
-              onSupuestos: (init) => openForm("supuestos", init?.tipo_cultivo_id ? init : null),
+              onEditSilo: admin ? (id) => openSiloForm("silo", id) : undefined,
+              onMovimiento: (id) =>
+                setEntry({ kind: "silo", siloId: String(id) }),
+              onSupuestos: (init) =>
+                openForm("supuestos", init?.tipo_cultivo_id ? init : null),
             }}
             opp={mercado.opportunity}
             oppLoading={mercado.oppLoading}
             oppError={mercado.oppError}
             oppSiloId={mercado.oppSiloId}
-            onPrice={mercado.setPrice}
             onSilo={mercado.setOppSilo}
           />
         )}
+        {activeTab === "team" && admin && <TeamView zones={zones} flash={flash} />}
+
+        {activeTab === "profile" && <ProfileView />}
       </main>
 
       {!entry && (
@@ -371,7 +539,9 @@ export default function Dashboard({ dark, onToggle }) {
       <ManualEntryModal
         open={!!entry}
         initial={entry}
-        lots={zones.flatMap((z) => z.lots).map((l) => ({ id: String(l.id), name: l.name }))}
+        lots={zones
+          .flatMap((z) => z.lots)
+          .map((l) => ({ id: String(l.id), name: l.name }))}
         silos={silosApi.silos}
         onClose={() => setEntry(null)}
         onSave={saveEntry}
@@ -383,7 +553,7 @@ export default function Dashboard({ dark, onToggle }) {
         tipos={tipos}
         refreshKey={siloRefresh}
         onClose={() => setSiloView(null)}
-        onEdit={(raw) => openForm("silo", raw)}
+        onEdit={admin ? (raw) => openForm("silo", raw) : undefined}
         onMedicion={(raw) => openForm("medicion", raw)}
         onMovimiento={(raw) => {
           setSiloView(null);
@@ -396,14 +566,17 @@ export default function Dashboard({ dark, onToggle }) {
         open={!!form}
         zones={zones}
         tipos={tipos}
-        defaultZoneId={lot?.zoneId}
+        defaultZoneId={zone?.id}
         initial={formInitial}
         onClose={closeForm}
         onSave={saveForm}
       />
 
       {toast && (
-        <div role="status" className="fixed bottom-24 left-1/2 z-50 -translate-x-1/2 rounded-full bg-canopy-900/95 px-5 py-2.5 text-sm font-medium text-white shadow-lg sm:bottom-8">
+        <div
+          role="status"
+          className="fixed bottom-24 left-1/2 z-50 -translate-x-1/2 rounded-full bg-canopy-900/95 px-5 py-2.5 text-sm font-medium text-white shadow-lg sm:bottom-8"
+        >
           {toast}
         </div>
       )}

@@ -40,6 +40,7 @@ export default function FieldsSheet({
   onToggle,
   onSelectLot,
   onSelectZone,
+  onAddLotIn,
   onPickPlace,
   creatingZone = false,
   onNewZone,
@@ -60,8 +61,9 @@ export default function FieldsSheet({
 
   // Búsqueda de zonas geográficas (API) con debounce
   const q = query.trim();
+  const canCreate = !!onPickPlace; // solo el administrador crea establecimientos
   useEffect(() => {
-    if (q.length < 3) {
+    if (!canCreate || q.length < 3) {
       setPlaces([]);
       setPlacesState("idle");
       return;
@@ -80,7 +82,7 @@ export default function FieldsSheet({
       clearTimeout(t);
       ctrl.abort();
     };
-  }, [q]);
+  }, [q, canCreate]);
 
   // Filtro local de lotes por nombre, cultivo o zona
   const groups = useMemo(() => {
@@ -130,7 +132,7 @@ export default function FieldsSheet({
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Buscar lote, cultivo o zona del mundo"
+              placeholder={canCreate ? "Buscar lote, cultivo o zona del mundo" : "Buscar lote o cultivo"}
               aria-label="Buscar lotes y zonas"
               className="w-full rounded-xl border border-canopy-200 bg-white py-3 pl-11 pr-10 text-[15px] text-canopy-900 outline-none placeholder:text-canopy-400 focus:border-canopy-500 focus:ring-2 focus:ring-canopy-500/20 dark:border-white/10 dark:bg-[#0b1522] dark:text-white dark:focus:border-gold-400 dark:focus:ring-gold-400/20"
             />
@@ -156,7 +158,7 @@ export default function FieldsSheet({
 
           <div className="mt-3 min-h-0 flex-1 space-y-1 overflow-y-auto pr-1">
             {/* Resultados de la API de zonas geográficas */}
-            {q.length >= 3 && (
+            {canCreate && q.length >= 3 && (
               <div className="mb-2">
                 <p className="px-1 pb-1 font-mono text-[10px] uppercase tracking-[0.2em] text-canopy-500 dark:text-canopy-300">
                   Zonas geográficas
@@ -199,7 +201,9 @@ export default function FieldsSheet({
 
             {!loading && zones.length === 0 && q.length === 0 && (
               <p className="px-1 py-3 text-sm leading-relaxed text-canopy-600 dark:text-canopy-300">
-                Todavía no tenés establecimientos. Usá “Nuevo establecimiento” o buscá tu zona arriba y elegila para crear el primero.
+                {canCreate
+                  ? "Todavía no tenés establecimientos. Usá “Nuevo establecimiento” o buscá tu zona arriba y elegila para crear el primero."
+                  : "Todavía no tenés una estancia con lotes disponibles. Consultá a tu administrador."}
               </p>
             )}
 
@@ -252,7 +256,7 @@ export default function FieldsSheet({
 
                   {isOpen && lots.length === 0 && (
                     <p className="px-3 pb-2 text-xs leading-relaxed text-canopy-600 dark:text-canopy-300">
-                      Sin lotes en esta zona. Usá el botón naranja “+” del mapa para dibujar el primero.
+                      Esta estancia no tiene lotes todavía.
                     </p>
                   )}
 
@@ -280,25 +284,34 @@ export default function FieldsSheet({
                               </span>
                             </span>
                           </button>
-                          <button
+                          {onEditLot && <button
                             onClick={() => onEditLot(l)}
                             aria-label={`Editar ${l.name}`}
                             title="Editar lote"
                             className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-canopy-600 hover:bg-canopy-100 dark:text-canopy-300 dark:hover:bg-white/10"
                           >
                             <Pencil size={17} />
-                          </button>
-                          <button
+                          </button>}
+                          {onDeleteLot && <button
                             onClick={() => onDeleteLot(l)}
                             aria-label={`Eliminar ${l.name}`}
                             title="Eliminar lote"
                             className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10"
                           >
                             <Trash2 size={17} />
-                          </button>
+                          </button>}
                         </div>
                       );
                     })}
+
+                  {isOpen && onAddLotIn && (
+                    <button
+                      onClick={() => onAddLotIn(zone)}
+                      className="mb-2 inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-orange-400 px-3 py-2 text-xs font-bold text-orange-600 hover:bg-orange-50 dark:text-gold-300 dark:hover:bg-white/5"
+                    >
+                      <Plus size={14} /> Nuevo lote en {zone.name}
+                    </button>
+                  )}
                 </div>
               );
             })}

@@ -63,12 +63,14 @@ export default function SilosView({ silos, loads, rain30, loading = false, error
           <p className="mt-1 font-mono text-sm text-canopy-600 dark:text-canopy-300">Stock, temperatura y humedad por silo.</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <button
+          {onAddSilo && (
+<button
             onClick={onAddSilo}
             className="inline-flex items-center gap-2 rounded-lg border border-orange-500 px-4 py-2.5 text-sm font-bold text-orange-600 transition hover:bg-orange-50 dark:text-orange-300 dark:hover:bg-orange-500/10"
           >
             <Plus size={16} /> Agregar silo
           </button>
+)}
           {silos.length > 0 && (
             <button
               onClick={() => onRegister({ kind: "silo" })}
@@ -97,12 +99,14 @@ export default function SilosView({ silos, loads, rain30, loading = false, error
         <Card className="p-8 text-center">
           <Warehouse size={28} className="mx-auto text-canopy-500 dark:text-canopy-300" />
           <p className="mt-3 text-sm text-canopy-700 dark:text-canopy-200">Todavía no tenés silos cargados.</p>
-          <button
+          {onAddSilo && (
+<button
             onClick={onAddSilo}
             className="mt-4 inline-flex items-center gap-2 rounded-lg bg-orange-500 px-4 py-2.5 text-sm font-bold text-white shadow-md transition hover:bg-orange-600"
           >
             <Plus size={16} /> Agregar silo
           </button>
+)}
         </Card>
       )}
 

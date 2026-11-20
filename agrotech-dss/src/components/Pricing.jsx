@@ -3,6 +3,7 @@ import { Check, Zap } from "lucide-react";
 
 const plans = [
   {
+    id: "core",
     name: "Core Data",
     tier: "Tier 01",
     price: "240",
@@ -10,6 +11,7 @@ const plans = [
     features: ["Gestión Lotes Base", "Inventario", "Reportes Standard"],
   },
   {
+    id: "pro",
     name: "IoT & Analytics",
     tier: "Tier 02 Pro",
     price: "580",
@@ -24,6 +26,7 @@ const plans = [
     ],
   },
   {
+    id: "enterprise",
     name: "Enterprise Cluster",
     tier: "Tier 03",
     price: "1,250",
@@ -82,7 +85,7 @@ function Plan({ p }) {
       </ul>
 
       <Link
-        to="/registro"
+        to={`/contratacion?plan=${p.id}`}
         className={[
           "mt-8 block w-full rounded-md border py-3 text-center font-mono text-sm font-medium transition",
           p.featured

@@ -57,7 +57,7 @@ export default function Hero() {
               href="#precios"
               className="inline-flex items-center gap-2 rounded-md bg-canopy-800 px-5 py-3 font-mono text-xs font-medium uppercase tracking-widest text-white transition hover:bg-canopy-700 dark:bg-gold-400 dark:text-canopy-950 dark:hover:bg-gold-300"
             >
-              <Terminal size={15} /> Deploy data stack
+              <Terminal size={15} /> Ver planes
             </a>
             <Link
               to="/docs"

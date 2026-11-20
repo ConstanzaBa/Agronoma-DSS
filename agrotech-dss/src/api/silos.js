@@ -1,4 +1,4 @@
-import { request } from "./http.js";
+import { ApiError, request } from "./http.js";
 import { listTiposCultivo } from "./campo.js";
 
 // Silos vía Gateway: /v1/silos/<ruta>  (interno: /api/v1/<ruta>).
@@ -32,7 +32,7 @@ export const listMovimientos = async (id, signal) => {
 };
 
 /** POST /silos/{id}/movimientos → 201 (nuevo) o 200 (misma clave de idempotencia: devuelve el ya registrado). */
-export const createMovimiento = (id, body) => request(`/silos/silos/${id}/movimientos`, { method: "POST", body });
+export const createMovimiento = (id, body) => conMensajes(request(`/silos/silos/${id}/movimientos`, { method: "POST", body }));
 
 // Medición ausente = null en el backend (humedad_grano_pct, temperatura_nucleo_c): se conserva null.
 const opt = (v) => (v == null || Number.isNaN(Number(v)) ? null : Number(v));
@@ -90,15 +90,36 @@ export async function getSilosData(signal) {
   };
 }
 
+// Mensajes entendibles para los errores de Silos/Gateway (el cuerpo trae `codigo`; el texto del backend es técnico).
+const MENSAJES = {
+  sin_permiso: "No tenés permiso para esta acción. Solo el administrador puede crear o editar silos.",
+  establecimiento_invalido: "El establecimiento elegido no pertenece a tu cuenta. Elegí otro e intentá de nuevo.",
+  servicio_no_disponible: "El servicio no está disponible en este momento y no se guardó nada. Intentá de nuevo en unos minutos.",
+};
+
+async function conMensajes(promesa) {
+  try {
+    return await promesa;
+  } catch (err) {
+    const msg = err instanceof ApiError ? MENSAJES[err.code] : null;
+    if (msg) {
+      err.message = msg;
+      // Marca el campo del formulario cuando el error es del establecimiento elegido.
+      if (err.code === "establecimiento_invalido") err.fields = { establecimiento_id: msg };
+    }
+    throw err;
+  }
+}
+
 /** GET /silos/{id} */
 export const getSilo = (id, signal) => request(`/silos/silos/${id}`, { signal });
 /** PUT /silos/{id} */
-export const updateSilo = (id, body) => request(`/silos/silos/${id}`, { method: "PUT", body });
+export const updateSilo = (id, body) => conMensajes(request(`/silos/silos/${id}`, { method: "PUT", body }));
 /** PUT /silos/{id}/mediciones { humedad_grano_pct, temperatura_nucleo_c } */
-export const updateMediciones = (id, body) => request(`/silos/silos/${id}/mediciones`, { method: "PUT", body });
+export const updateMediciones = (id, body) => conMensajes(request(`/silos/silos/${id}/mediciones`, { method: "PUT", body }));
 
 /** POST /silos/silos → 201 con el silo creado. */
-export const createSilo = (body) => request("/silos/silos", { method: "POST", body });
+export const createSilo = (body) => conMensajes(request("/silos/silos", { method: "POST", body }));
 
 export const registrarMovimiento = (siloId, { direction, tons, date, note, key }) =>
   createMovimiento(siloId, {

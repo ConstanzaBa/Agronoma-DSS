@@ -47,8 +47,10 @@ const ROUTES = {
     ["PUT", "/campo/lotes/{id}", "Edita."],
     ["DELETE", "/campo/lotes/{id}", "Baja."],
     ["POST", "/campo/lotes/{id}/dispositivos", "Registra un sensor y emite su token (se muestra una sola vez)."],
-    ["GET", "/campo/dispositivos/{id}", "Estado del sensor: `ultima_conexion_en`, `ultima_secuencia`."],
-    ["POST", "/campo/lecturas", "Sensor: envía una lectura. Solo token de dispositivo."],
+    ["GET", "/campo/dispositivos/{id}", "Estado del sensor: `activo`, `ultima_conexion_en`, `ultima_secuencia`."],
+    ["PATCH", "/campo/dispositivos/{id}", "Activa o desactiva el sensor (`activo`). No toca el token."],
+    ["POST", "/campo/dispositivos/{id}/token", "Regenera el token del sensor (se muestra una sola vez; invalida el anterior)."],
+    ["POST", "/campo/lecturas", "Sensor: envía una lectura. Solo token de dispositivo; un sensor inactivo recibe 403."],
     ["GET", "/campo/lotes/{id}/lecturas", "Historial paginado con `desde` / `hasta`."],
     ["GET", "/campo/lotes/{id}/lluvia", "Registros de lluvia con `desde` / `hasta`."],
     ["POST", "/campo/lotes/{id}/lluvia", "Registra lluvia (idempotente)."],
@@ -137,6 +139,8 @@ const NAV = [
       { id: "campo-establecimientos", method: "POST", label: "/campo/establecimientos" },
       { id: "campo-lotes", method: "POST", label: "/campo/establecimientos/{id}/lotes" },
       { id: "campo-dispositivos", method: "POST", label: "/campo/lotes/{id}/dispositivos" },
+      { id: "campo-dispositivo-estado", method: "PATCH", label: "/campo/dispositivos/{id}" },
+      { id: "campo-dispositivo-token", method: "POST", label: "/campo/dispositivos/{id}/token" },
       { id: "campo-lecturas", method: "POST", label: "/campo/lecturas" },
       { id: "campo-lluvia", method: "POST", label: "/campo/lotes/{id}/lluvia" },
       { id: "campo-clima", method: "GET", label: "/campo/establecimientos/{id}/clima" },
@@ -290,11 +294,17 @@ const EXAMPLES = {
 }`,
       },
       {
-        code: "403", label: "Forbidden", tone: "warn", title: "Dispositivo inexistente o inactivo",
+        code: "403", label: "Forbidden", tone: "warn", title: "Sensor inactivo (o inexistente)",
         body: `{
   "codigo": "sin_permiso",
-  "mensaje": "Dispositivo inexistente o inactivo",
-  "detalles": "El token no corresponde a un sensor activo"
+  "mensaje": "Dispositivo inexistente o inactivo"
+}`,
+      },
+      {
+        code: "401", label: "Unauthorized", tone: "warn", title: "Token ausente, inválido o regenerado",
+        body: `{
+  "codigo": "no_autenticado",
+  "mensaje": "Token inválido o vencido"
 }`,
       },
     ],
@@ -959,7 +969,8 @@ export default function ApiDocs({ dark, onToggle }) {
               <Code>POST /v1/auth/login</Code>. El gateway valida contra <b>auth</b> y cachea los tokens válidos 60 s,
               así que un token revocado con <Code>logout</Code> puede seguir aceptándose hasta 60 s. El token de un
               sensor solo sirve para <Code>POST /v1/campo/lecturas</Code>; en cualquier otra ruta recibe{" "}
-              <Code>403 sin_permiso</Code>.
+              <Code>403 sin_permiso</Code>. Los tokens de sensor se cachean solo 5 s: al regenerarlo, el anterior puede
+              seguir aceptándose hasta 5 s y después recibe <Code>401 no_autenticado</Code>.
             </Concept>
             <Concept id="idempotencia" icon={Lock} title="Idempotencia">
               Las altas desde formularios (movimientos de silo, lluvia) llevan <Code>clave_idempotencia</Code>, un UUID
@@ -1204,8 +1215,80 @@ export default function ApiDocs({ dark, onToggle }) {
               ]}
             />
             <P>
-              Si auth no puede emitir el token, responde <Code>503 servicio_no_disponible</Code>.
+              El sensor se crea <b>activo</b>. Requiere token de usuario (<Code>Authorization: Bearer</Code>). Errores:{" "}
+              <Code>404 no_encontrado</Code> si el lote no existe o no es tuyo, <Code>422 validacion</Code> si el cuerpo es
+              inválido y <Code>503 servicio_no_disponible</Code> («No se pudo emitir el token del sensor») si auth no
+              puede emitir el token; en ese caso el sensor no se crea.
             </P>
+            <Pre
+              code={`curl -X POST "${BASE_URL}/campo/lotes/15/dispositivos" \\
+  -H "Authorization: Bearer TU_TOKEN" \\
+  -H "Content-Type: application/json" \\
+  -d '{ "nombre": "Sensor norte", "latitud": -31.4201, "longitud": -64.1888 }'`}
+            />
+          </Endpoint>
+
+          <Endpoint id="campo-dispositivo-estado" method="PATCH" path="/v1/campo/dispositivos/{id}">
+            <P>
+              Activa o desactiva un sensor. Desactivar <b>no elimina el token</b>: al reactivar, el sensor sigue usando el
+              mismo. Mientras está inactivo, <Code>POST /v1/campo/lecturas</Code> responde <Code>403 sin_permiso</Code>.
+              Requiere token de usuario; el sensor debe pertenecer a un lote tuyo.
+            </P>
+            <SubTitle>Cuerpo de la petición (JSON)</SubTitle>
+            <Table
+              head={PARAMS_HEAD}
+              rows={[R("activo", "boolean", <><Code>true</Code> activa, <Code>false</Code> desactiva.</>, true)]}
+            />
+            <SubTitle>Respuesta 200</SubTitle>
+            <P>El dispositivo actualizado (id, lote_id, nombre, identificador_unico, latitud, longitud, activo, ultima_conexion_en, ultima_secuencia).</P>
+            <SubTitle>Errores</SubTitle>
+            <Table
+              head={["Código", "Cuerpo", "Cuándo"]}
+              rows={[
+                [<Code key="a">401</Code>, <Code key="b">no_autenticado</Code>, "Falta el token o es inválido."],
+                [<Code key="c">404</Code>, <Code key="d">no_encontrado</Code>, "El sensor no existe o es de otro usuario."],
+                [<Code key="e">422</Code>, <Code key="f">validacion</Code>, <>Falta <Code>activo</Code> o no es booleano.</>],
+              ]}
+            />
+            <Pre
+              code={`curl -X PATCH "${BASE_URL}/campo/dispositivos/42" \\
+  -H "Authorization: Bearer TU_TOKEN" \\
+  -H "Content-Type: application/json" \\
+  -d '{ "activo": false }'`}
+            />
+          </Endpoint>
+
+          <Endpoint id="campo-dispositivo-token" method="POST" path="/v1/campo/dispositivos/{id}/token">
+            <P>
+              Regenera el token del sensor: Campo pide uno nuevo a auth y lo devuelve en esta respuesta. El token se
+              muestra <b>una sola vez</b> (Campo no lo guarda) y el anterior queda invalidado. Como el gateway cachea los
+              tokens de sensor hasta 5 s, el token viejo puede seguir aceptándose durante ese lapso y después recibe{" "}
+              <Code>401 no_autenticado</Code>. Sin cuerpo; requiere token de usuario y que el sensor sea de un lote tuyo.
+              Funciona también con el sensor inactivo.
+            </P>
+            <SubTitle>Respuesta 200</SubTitle>
+            <Table
+              head={PARAMS_HEAD}
+              rows={[
+                R("dispositivo", "object", "El sensor (mismo formato que en el alta)."),
+                R("token", "string", "Credencial nueva. No se vuelve a mostrar."),
+                R("permisos", "array", <><Code>["lecturas:crear"]</Code>.</>),
+                R("aviso", "string", "Recordatorio de guardarlo y de que el anterior deja de servir."),
+              ]}
+            />
+            <SubTitle>Errores</SubTitle>
+            <Table
+              head={["Código", "Cuerpo", "Cuándo"]}
+              rows={[
+                [<Code key="a">401</Code>, <Code key="b">no_autenticado</Code>, "Falta el token o es inválido."],
+                [<Code key="c">404</Code>, <Code key="d">no_encontrado</Code>, "El sensor no existe o es de otro usuario."],
+                [<Code key="e">503</Code>, <Code key="f">servicio_no_disponible</Code>, "auth no pudo emitir el token; el anterior sigue vigente."],
+              ]}
+            />
+            <Pre
+              code={`curl -X POST "${BASE_URL}/campo/dispositivos/42/token" \\
+  -H "Authorization: Bearer TU_TOKEN"`}
+            />
           </Endpoint>
 
           <Endpoint id="campo-lecturas" method="POST" path="/v1/campo/lecturas" example="lectura" onExample={pickExample}>
@@ -1225,6 +1308,14 @@ export default function ApiDocs({ dark, onToggle }) {
                 R("medido_en", "date-time", "Reloj del sensor (el servidor guarda además recibido_en).", true),
               ]}
             />
+            <SubTitle>Autenticación y errores</SubTitle>
+            <P>
+              Requiere <Code>Authorization: Bearer &lt;token del sensor&gt;</Code> (el que emitió el alta o la última
+              regeneración). Errores: <Code>401 no_autenticado</Code> si el token falta, es inválido o fue regenerado;{" "}
+              <Code>403 sin_permiso</Code> («Dispositivo inexistente o inactivo») si el sensor está <b>inactivo</b> — la
+              lectura no se guarda; al reactivarlo vuelve a aceptarse con el mismo token; <Code>403 sin_permiso</Code> si se
+              usa un token de usuario; <Code>409 secuencia_conflicto</Code>; <Code>422 validacion</Code>.
+            </P>
             <Note title="Deduplicación por secuencia">
               Una repetición exacta responde <Code>200 duplicada: true</Code> sin guardar ni publicar de nuevo. La misma
               secuencia con otros datos responde <Code>409 secuencia_conflicto</Code>. Si{" "}
@@ -1561,7 +1652,7 @@ margen_ars_ha  = margen_usd_ha × dolar_del_dia`}
               rows={[
                 R("tipo", "enum", <><Code>moisture</Code>, <Code>silo_temp</Code>, <Code>no_rain</Code>, <Code>market</Code>, <Code>price_target</Code>.</>, true),
                 R("severidad", "enum", <><Code>critical</Code>, <Code>warning</Code> o <Code>info</Code>.</>, true),
-                R("parametros", "array · mín 1", "Umbrales según el tipo.", true),
+                R("parametros", "objeto", <>Clave-valor según el tipo: <Code>moisture</Code> → <Code>umbral_menor_pct</Code>; <Code>no_rain</Code> → <Code>dias_minimos</Code>; <Code>silo_temp</Code> → <Code>margen_c</Code>; <Code>market</Code> → <Code>veredictos</Code> (array: sell, review, wait); <Code>price_target</Code> → <Code>enfriamiento_horas</Code>.</>, true),
                 R("activa", "boolean · opcional", "Habilita o deshabilita la regla."),
               ]}
             />

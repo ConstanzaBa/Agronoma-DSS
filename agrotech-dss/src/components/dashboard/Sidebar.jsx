@@ -1,13 +1,16 @@
-import { Archive, BellRing, Check, LogOut, Map, Moon, RefreshCw, Sun, Tractor, TrendingUp } from "lucide-react";
+import { Archive, BellRing, Check, LogOut, Map, Moon, RefreshCw, Sun, Tractor, TrendingUp, UserCircle, Users } from "lucide-react";
+import { ROLE_LABELS } from "../../auth.js";
 
 const items = [
   { id: "map", label: "Telemetry Map", icon: Map },
   { id: "alerts", label: "Alert Feed", icon: BellRing },
   { id: "silos", label: "Silo Metrics", icon: Archive },
   { id: "market", label: "Market Predict", icon: TrendingUp },
+  { id: "team", label: "Team Access", icon: Users, adminOnly: true }, // empleados y códigos: solo administrador
+  { id: "profile", label: "Mi perfil", icon: UserCircle },
 ];
 
-export default function Sidebar({ alertCount = 0, tab, onTab, dark, onToggle, syncState, onSync, onLogout }) {
+export default function Sidebar({ alertCount = 0, tab, onTab, dark, onToggle, syncState, onSync, onLogout, user = null, isAdmin = false }) {
   return (
     <aside className="border-b border-canopy-200 bg-white p-4 dark:border-white/10 dark:bg-[#06170b]/70 lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:border-b-0 lg:border-r lg:p-6">
       <div className="flex items-center gap-3">
@@ -21,7 +24,7 @@ export default function Sidebar({ alertCount = 0, tab, onTab, dark, onToggle, sy
       </div>
 
       <nav className="mt-5 flex gap-2 overflow-x-auto pb-1 lg:mt-9 lg:flex-col lg:overflow-visible">
-        {items.map(({ id, label, icon: Icon }) => {
+        {items.filter((i) => !i.adminOnly || isAdmin).map(({ id, label, icon: Icon }) => {
           const badge = id === "alerts" ? alertCount : 0;
           const active = tab === id;
           return (
@@ -48,7 +51,14 @@ export default function Sidebar({ alertCount = 0, tab, onTab, dark, onToggle, sy
         })}
       </nav>
 
-      <div className="mt-4 flex items-center gap-2 lg:mt-auto lg:flex-col lg:items-stretch lg:border-t lg:border-canopy-200 lg:pt-5 dark:lg:border-white/10">
+      {user && (
+        <p className="mt-4 hidden truncate font-mono text-[11px] text-canopy-600 dark:text-canopy-300 lg:mt-auto lg:block" title={user.correo}>
+          {[user.nombre, user.apellido].filter(Boolean).join(" ") || user.correo}
+          <span className="block uppercase tracking-wider text-canopy-500 dark:text-gold-300/80">{ROLE_LABELS[user.rol] ?? user.rol}</span>
+        </p>
+      )}
+
+      <div className="mt-4 flex items-center gap-2 lg:mt-4 lg:flex-col lg:items-stretch lg:border-t lg:border-canopy-200 lg:pt-5 dark:lg:border-white/10">
         <div className="flex gap-2">
           <button
             onClick={onToggle}

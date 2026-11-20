@@ -28,9 +28,6 @@ export default function Modules() {
             Módulos GIS y procesamiento de datos en tiempo real para optimización de recursos
             hídricos y monitoreo solar in situ.
           </p>
-          <p className="mt-5 hidden items-center gap-2 font-mono text-xs text-gold-400 dark:flex">
-            ▸ Nodos de monitoreo activos: 1,480+
-          </p>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

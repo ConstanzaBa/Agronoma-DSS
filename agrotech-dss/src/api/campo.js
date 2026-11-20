@@ -2,7 +2,7 @@ import { request } from "./http.js";
 
 // Campo vía Gateway: /v1/campo/<ruta>  (interno: /api/v1/<ruta>).
 // Los listados llegan como { data: [...], meta } (o directamente un arreglo).
-const rows = (res) => {
+export const rows = (res) => {
   // Si el backend informa más páginas de las que se pidieron, hay registros que este cliente no lee.
   if (Number(res?.meta?.ultima_pagina) > 1) {
     console.warn(`[campo] Listado paginado incompleto: se leyeron ${res.data?.length ?? 0} de ${res.meta.total} registros.`);
@@ -30,6 +30,10 @@ export const deleteLote = (id) => request(`/campo/lotes/${id}`, { method: "DELET
 export const getClima = (establecimientoId, signal) => request(`/campo/establecimientos/${establecimientoId}/clima`, { signal });
 /** POST /lotes/{id}/dispositivos → { dispositivo, token, permisos, aviso } (el token se muestra una sola vez). */
 export const createDispositivo = (loteId, body) => request(`/campo/lotes/${loteId}/dispositivos`, { method: "POST", body });
+/** PATCH /dispositivos/{id} { activo } → dispositivo actualizado. Desactivar no toca el token; reactivar sigue usando el mismo. */
+export const setDispositivoActivo = (id, activo) => request(`/campo/dispositivos/${id}`, { method: "PATCH", body: { activo } });
+/** POST /dispositivos/{id}/token → { dispositivo, token, permisos, aviso }. El token nuevo se muestra una sola vez y el anterior queda invalidado. */
+export const regenerarTokenDispositivo = (id) => request(`/campo/dispositivos/${id}/token`, { method: "POST" });
 export const listTiposCultivo = async (signal) => rows(await request("/campo/tipos-cultivo", { signal }));
 export const listLecturas = async (loteId, { desde, hasta } = {}, signal) => {
   const q = new URLSearchParams({ por_pagina: String(PER_PAGE) });
@@ -44,3 +48,17 @@ export const listLluvia = async (loteId, { desde, hasta } = {}, signal) => {
   return rows(await request(`/campo/lotes/${loteId}/lluvia?${q}`, { signal }));
 };
 export const createLluvia = (loteId, body) => request(`/campo/lotes/${loteId}/lluvia`, { method: "POST", body });
+
+// ── Administración de la cuenta (solo rol admin; la seguridad real está en el backend) ──────────────────────
+/** POST /establecimientos/{id}/codigos → código de registro para empleados de esa estancia. */
+export const createCodigo = (establecimientoId) => request(`/campo/establecimientos/${establecimientoId}/codigos`, { method: "POST" });
+/** GET /codigos → códigos de la cuenta (estados: activo | usado | revocado). */
+export const listCodigos = async (signal) => rows(await request(`/campo/codigos?por_pagina=${PER_PAGE}`, { signal }));
+/** DELETE /codigos/{id} → revoca el código. */
+export const revokeCodigo = (id) => request(`/campo/codigos/${id}`, { method: "DELETE" });
+/** GET /empleados → empleados de la cuenta (no incluye al administrador). */
+export const listEmpleados = async (signal) => rows(await request(`/campo/empleados?por_pagina=${PER_PAGE}`, { signal }));
+/** GET /empleados/{id} → detalle y estancia asignada. */
+export const getEmpleado = (id, signal) => request(`/campo/empleados/${id}`, { signal });
+/** DELETE /empleados/{id} → baja: sin acceso y libera su cupo. */
+export const deleteEmpleado = (id) => request(`/campo/empleados/${id}`, { method: "DELETE" });

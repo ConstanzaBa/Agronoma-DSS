@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { getIndiceVenta, getQuotes, mapIndice, registrarCotizacion } from "../api/mercado.js";
 
 /** Cotizaciones e índice de venta reales (Gateway /v1/mercado/...). `silos` viene de useSilos. */
-export function useMercado(silos) {
+export function useMercado(silos, { conIndice = true } = {}) {
   const [quotes, setQuotes] = useState([]);
   const [quotesLoading, setQuotesLoading] = useState(true);
   const [quotesError, setQuotesError] = useState("");
@@ -33,8 +33,8 @@ export function useMercado(silos) {
 
   // GET /v1/mercado/silos/{id}/indice-venta (se recalcula al cambiar de silo, de stock o de cotización)
   useEffect(() => {
-    if (!oppSiloId) {
-      setIndice(null);
+    if (!conIndice || !oppSiloId) {
+      setIndice(null); // el índice de venta es solo del admin: el empleado no lo pide
       return;
     }
     const ctrl = new AbortController();
@@ -51,7 +51,7 @@ export function useMercado(silos) {
       })
       .finally(() => !ctrl.signal.aborted && setOppLoading(false));
     return () => ctrl.abort();
-  }, [oppSiloId, silos, quotes, version]);
+  }, [conIndice, oppSiloId, silos, quotes, version]);
 
   /** POST /mercado/cotizaciones y recarga la tabla. */
   const setPrice = useCallback(

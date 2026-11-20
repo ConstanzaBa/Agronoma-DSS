@@ -1,18 +1,21 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { register } from "../api/auth.js";
-import { AlertCircle, Building2, CheckCircle2, Loader2, Lock, Mail, User } from "lucide-react";
+import { AlertCircle, Briefcase, CheckCircle2, Loader2, Lock, Mail, User, KeyRound } from "lucide-react";
 import AuthLayout, { primaryBtn } from "../components/auth/AuthLayout.jsx";
 import { Field, PasswordField, PasswordStrength, SelectField } from "../components/auth/Field.jsx";
+import { EMPLOYEE_ROLES, ROLE_LABELS } from "../auth.js";
 
 const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const roles = ["Ingeniero agrónomo", "Productor", "Asesor técnico", "Contratista", "Otro"];
+// Solo roles de empleado: /registro nunca permite admin.
+const roles = EMPLOYEE_ROLES.map((r) => ({ value: r, label: ROLE_LABELS[r] }));
 
 const initial = {
   nombre: "",
   apellido: "",
   email: "",
-  establecimiento: "",
+  codigo: "",
+  profesion: "",
   rol: "",
   password: "",
   confirm: "",
@@ -30,6 +33,7 @@ export default function Register({ dark, onToggle }) {
 
   const validate = () => {
     const e = {};
+    if (!form.codigo.trim()) e.codigo = "Ingresá el código de estancia que te dio tu administrador.";
     if (!form.nombre.trim()) e.nombre = "Requerido.";
     if (!form.apellido.trim()) e.apellido = "Requerido.";
     if (!emailRe.test(form.email)) e.email = "Ingresá un correo válido.";
@@ -50,12 +54,15 @@ export default function Register({ dark, onToggle }) {
 
     setLoading(true);
     try {
+      // Sin cuenta_id / usuario_id / empleado_id / estancia: el backend resuelve la pertenencia por el código.
       await register({
+        codigo_estancia: form.codigo.trim(),
+        rol: form.rol,
         nombre: form.nombre.trim(),
         apellido: form.apellido.trim(),
         correo: form.email.trim(),
         contrasena: form.password,
-        profesion: form.rol,
+        profesion: form.profesion.trim(),
       });
       setDone(true);
     } catch (err) {
@@ -65,8 +72,10 @@ export default function Register({ dark, onToggle }) {
       if (f.apellido) next.apellido = f.apellido;
       if (f.correo) next.email = f.correo;
       if (f.contrasena) next.password = f.contrasena;
-      if (f.profesion) next.rol = f.profesion;
-      if (!Object.keys(next).length) next.form = err.message || "No se pudo crear la cuenta.";
+      if (f.rol) next.rol = f.rol;
+      if (f.profesion) next.profesion = f.profesion;
+      if (f.codigo_estancia) next.codigo = f.codigo_estancia;
+      if (!Object.keys(next).length) next.form = err.message || "No se pudo completar el registro.";
       setErrors(next);
     } finally {
       setLoading(false);
@@ -77,13 +86,18 @@ export default function Register({ dark, onToggle }) {
     <AuthLayout
       dark={dark}
       onToggle={onToggle}
-      title="Crear cuenta"
-      subtitle="Empezá a gestionar tus campos con datos en tiempo real."
+      title="Registro de empleado"
+      subtitle="Unite a la cuenta de tu empresa con el código de estancia que te dio tu administrador."
       footer={
         <>
           ¿Ya tenés cuenta?{" "}
           <Link to="/login" className="font-bold text-canopy-600 underline-offset-4 hover:underline dark:text-gold-400">
             Iniciá sesión
+          </Link>
+          <br />
+          ¿Querés contratar Agronoma?{" "}
+          <Link to="/contratacion" className="font-bold text-canopy-600 underline-offset-4 hover:underline dark:text-gold-400">
+            Ver planes
           </Link>
         </>
       }
@@ -91,7 +105,7 @@ export default function Register({ dark, onToggle }) {
       {done ? (
         <div className="rounded-md border border-emerald-500/40 bg-emerald-500/10 p-5 font-mono text-sm text-emerald-700 dark:text-emerald-300">
           <p className="flex items-center gap-2 font-bold">
-            <CheckCircle2 size={18} /> ¡Cuenta creada!
+            <CheckCircle2 size={18} /> ¡Registro completado!
           </p>
           <p className="mt-2 text-xs leading-relaxed">
             Ya podés iniciar sesión con tu correo y contraseña.
@@ -110,6 +124,18 @@ export default function Register({ dark, onToggle }) {
               <AlertCircle size={16} className="shrink-0" /> {errors.form}
             </div>
           )}
+          <Field
+            id="codigo"
+            label="Código de estancia"
+            icon={KeyRound}
+            autoComplete="off"
+            autoCapitalize="characters"
+            placeholder="Código que te dio tu administrador"
+            value={form.codigo}
+            onChange={set("codigo")}
+            error={errors.codigo}
+          />
+
           <div className="grid gap-5 sm:grid-cols-2">
             <Field
               id="nombre"
@@ -144,12 +170,12 @@ export default function Register({ dark, onToggle }) {
 
           <div className="grid gap-5 sm:grid-cols-2">
             <Field
-              id="establecimiento"
-              label="Establecimiento (opcional)"
-              icon={Building2}
-              placeholder="Estancia / empresa"
-              value={form.establecimiento}
-              onChange={set("establecimiento")}
+              id="profesion"
+              label="Profesión (opcional)"
+              icon={Briefcase}
+              value={form.profesion}
+              onChange={set("profesion")}
+              error={errors.profesion}
             />
             <SelectField
               id="rol"
@@ -209,10 +235,10 @@ export default function Register({ dark, onToggle }) {
           <button type="submit" disabled={loading} className={primaryBtn}>
             {loading ? (
               <>
-                <Loader2 size={16} className="animate-spin" /> Creando cuenta...
+                <Loader2 size={16} className="animate-spin" /> Registrando...
               </>
             ) : (
-              "Crear cuenta"
+              "Registrarme"
             )}
           </button>
         </form>
